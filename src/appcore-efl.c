@@ -187,7 +187,8 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 			if (ui->ops->pause)
 				r = ui->ops->pause(ui->ops->data);
 			ui->state = AS_PAUSED;
-			__appcore_timer_add(ui);
+			if(r >= 0)
+				__appcore_timer_add(ui);
 		}
 		/* TODO : rotation stop */
 		r = appcore_pause_rotation_cb();

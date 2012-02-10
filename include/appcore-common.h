@@ -666,6 +666,46 @@ void appcore_exit(void);
  */
 int appcore_flush_memory(void);
 
+/**
+ * @par Description:
+ * Set a open callback
+ * Only when application is running, if aul_open api is called, then this callback function is called. 
+ * If your open_cb function return -1, then appcore doesn't raise window. 
+ *
+ * @param[in] cb callback function
+ * @param[in] data callback function data
+ *
+ * @return 0 on success, -1 on error (<I>errno</I> set)
+ *
+ * @pre None
+ * @post None.
+ * @remarks None.
+ *
+ * @par Sample code:
+ * @code
+#include <appcore-common.h>
+
+...
+
+static int _open_cb(enum appcore_rm, void *);
+
+...
+{
+	int r;
+
+	r = appcore_set_open_cb(_open_cb, data);
+	if (r == -1) {
+		// add exception handling
+	}
+
+	...
+}
+ * @endcode
+ *
+ */
+int appcore_set_open_cb(int (*cb) (void *), void *data);
+
+
 #ifdef __cplusplus
 }
 #endif

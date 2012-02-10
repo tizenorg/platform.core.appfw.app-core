@@ -81,6 +81,13 @@ struct evt_ops {
 	int (*vcb_post) (void *, void *);
 };
 
+struct open_s {
+	int (*callback) (void *);
+	void *cbdata;
+};
+
+static struct open_s open;
+
 static int __app_terminate(void *data);
 static int __app_resume(void *data);
 static int __app_reset(void *data, bundle *k);
@@ -419,6 +426,8 @@ static int __del_vconf(void)
 
 static int __aul_handler(aul_type type, bundle *b, void *data)
 {
+	int ret;
+
 	switch (type) {
 	case AUL_START:
 		_DBG("[APP %d]     AUL event: AUL_START", _pid);
@@ -426,7 +435,13 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 		break;
 	case AUL_RESUME:
 		_DBG("[APP %d]     AUL event: AUL_RESUME", _pid);
-		__app_resume(data);
+		if(open.callback) {
+			ret = open.callback(open.cbdata);
+			if (ret == 0)
+				__app_resume(data);
+		} else {
+			__app_resume(data);
+		}
 		break;
 	case AUL_TERMINATE:
 		_DBG("[APP %d]     AUL event: AUL_TERMINATE", _pid);
@@ -445,6 +460,15 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 static void __clear(struct appcore *ac)
 {
 	memset(ac, 0, sizeof(struct appcore));
+}
+
+EXPORT_API int appcore_set_open_cb(int (*cb) (void *),
+				       void *data)
+{
+	open.callback = cb;
+	open.cbdata = data;
+
+	return 0;
 }
 
 EXPORT_API int appcore_set_event_callback(enum appcore_event event,

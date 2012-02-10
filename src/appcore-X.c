@@ -32,6 +32,7 @@
 #include "appcore-internal.h"
 
 static Atom a_pid;
+static Atom a_active_win;
 
 static pid_t __get_win_pid(Display *d, Window win)
 {
@@ -97,19 +98,26 @@ static int __find_win(Display *d, Window *win, pid_t pid)
 
 static int __raise_win(Display *d, Window win)
 {
-	XWindowAttributes attr;
+	XEvent xev;
+	Window root;
 
-	XMapRaised(d, win);
-	XGetWindowAttributes(d, win, &attr);
-	_retv_if(attr.map_state != IsViewable, -1);
+	if (!a_active_win)
+		a_active_win = XInternAtom(d, "_NET_ACTIVE_WINDOW", False);
 
-	/*
-	 * Window Manger sets the Input Focus. 
-	 * Appcore does not need to enforce this anymore.
-	 *
-	 * XSetInputFocus(d, win, RevertToPointerRoot, CurrentTime);
-	 *
-	 */
+	root = XDefaultRootWindow(d);
+
+	xev.xclient.type = ClientMessage;
+	xev.xclient.display = d;
+	xev.xclient.window = win;
+	xev.xclient.message_type = a_active_win;
+	xev.xclient.format = 32;
+	xev.xclient.data.l[0] = 1;
+	xev.xclient.data.l[1] = CurrentTime;
+	xev.xclient.data.l[2] = 0;
+	xev.xclient.data.l[3] = 0;
+	xev.xclient.data.l[4] = 0;
+	XSendEvent(d, root, False,
+		   SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
 	return 0;
 }
