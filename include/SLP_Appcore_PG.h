@@ -470,10 +470,6 @@ Source example
 159         ad->ly_main = ly;
 160         evas_object_show(ly);
 161 
-162         // init internationalization
-163         r = appcore_set_i18n(PACKAGE, LOCALEDIR);
-164         if (r)
-165                 return -1;
 166         lang_changed(ad); // call the language changed callback to update strings
 167 
 168         evas_object_show(win);

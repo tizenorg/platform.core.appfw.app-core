@@ -31,7 +31,7 @@ SET(HEADERS_common appcore-common.h)
 
 INCLUDE(FindPkgConfig)
 #pkg_check_modules(pkg_common REQUIRED pmapi vconf sensor aul rua dlog x11)
-pkg_check_modules(pkg_common REQUIRED vconf sensor aul rua dlog x11)
+pkg_check_modules(pkg_common REQUIRED vconf sensor aul dlog x11)
 FOREACH(flag ${pkg_common_CFLAGS})
 	SET(EXTRA_CFLAGS_common "${EXTRA_CFLAGS_common} ${flag}")
 ENDFOREACH(flag)

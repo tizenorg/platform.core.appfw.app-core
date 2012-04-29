@@ -35,7 +35,6 @@
 #include <dlfcn.h>
 #include <vconf.h>
 #include <aul.h>
-#include <rua.h>
 #include "appcore-internal.h"
 
 #define SQLITE_FLUSH_MAX		(1024*1024)
@@ -99,6 +98,8 @@ static int __sys_langchg_pre(void *data, void *evt);
 static int __sys_langchg(void *data, void *evt);
 static int __sys_regionchg_pre(void *data, void *evt);
 static int __sys_regionchg(void *data, void *evt);
+extern void aul_finalize();
+
 
 static struct evt_ops evtops[] = {
 	{
@@ -150,66 +151,6 @@ static int __get_dir_name(char *dirname)
 	return 0;
 }
 
-
-static int __get_cmd(char *buf)
-{
-	FILE *fp;
-	int r;
-	char fname[FILENAME_MAX];
-
-	r = snprintf(fname, sizeof(fname), "/proc/%d/cmdline", getpid());
-	if (r < 0)
-		return -1;
-
-	fp = fopen(fname, "r");
-	if (fp == NULL)
-		return -1;
-
-	r = 0;
-	if (fgets(buf, PATH_MAX, fp) == NULL)
-		r = -1;
-
-	fclose(fp);
-
-	return r;
-}
-
-static int __update_rua(bundle *b)
-{
-	int r;
-	char buf[PATH_MAX];
-	struct rua_rec rec;
-
-	r = __get_cmd(buf);
-	if (r == -1)
-		return -1;
-
-	r = rua_init();
-	if (r == -1) {
-		_DBG("[APP %d] rua init error", _pid);
-		return -1;
-	}
-
-	memset(&rec, 0, sizeof(rec));
-
-	rec.pkg_name = getenv("PKG_NAME");
-	rec.app_path = buf;
-
-	if (b)
-		bundle_encode(b, (bundle_raw **)&rec.arg, NULL);
-
-	r = rua_add_history(&rec);
-	if (r == -1)
-		_DBG("[APP %d] rua add history error", _pid);
-
-	rua_fini();
-
-	if (rec.arg)
-		free(rec.arg);
-
-	return 0;
-}
-
 static int __app_terminate(void *data)
 {
 	struct appcore *ac = data;
@@ -242,7 +183,6 @@ static int __app_reset(void *data, bundle * k)
 	g_idle_add(__prt_ltime, ac);
 
 	ac->ops->cb_app(AE_RESET, ac->ops->data, k);
-	__update_rua(k);
 
 	return 0;
 }
@@ -250,13 +190,7 @@ static int __app_reset(void *data, bundle * k)
 static int __app_resume(void *data)
 {
 	x_raise_win(getpid());
-	__update_rua(NULL);
 	return 0;
-}
-
-static int __def_lowbatt(struct appcore *ac)
-{
-	return __app_terminate(ac);
 }
 
 static int __sys_do_default(struct appcore *ac, enum sys_event event)
@@ -557,6 +491,7 @@ EXPORT_API void appcore_exit(void)
 		__del_vconf();
 		__clear(&core);
 	}
+	aul_finalize();
 }
 
 EXPORT_API int appcore_flush_memory(void)

@@ -44,8 +44,15 @@ static pid_t __get_win_pid(Display *d, Window win)
 	unsigned long nitems;
 	unsigned long bytes_after;
 	unsigned char *prop_ret;
+	XWindowAttributes attr;
 
 	_retv_if(d == NULL || !a_pid, -1);
+
+	if (!XGetWindowAttributes(d, win, &attr))
+		return -1;
+
+	if (attr.override_redirect || attr.class == InputOnly)
+		return -1;
 
 	prop_ret = NULL;
 	r = XGetWindowProperty(d, win, a_pid, 0, 1, False, XA_CARDINAL,

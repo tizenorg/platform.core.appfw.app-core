@@ -1,7 +1,7 @@
-app-core (1.2-12) unstable; urgency=low
+app-core (1.2-19) unstable; urgency=low
 
   * Initial release
   * git: pkgs/a/app-core
-  * Tag: app-core_1.2-12
+  * Tag: app-core_1.2-19
 
- -- Jaeho Lee <jaeho81.lee@samsung.com>  Wed, 07 Dec 2011 13:53:56 +0900
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 20 Mar 2012 13:51:26 +0900

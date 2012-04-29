@@ -157,12 +157,18 @@ struct ui_ops {
 /* appcore-i18n.c */
 extern void update_lang(void);
 extern int set_i18n(const char *domainname, const char *dirname);
+void update_region(void);
+
 
 /* appcore-X.c */
 extern int x_raise_win(pid_t pid);
 
 /* appcore-util.c */
 /* extern void stack_trim(void);*/
+
+int appcore_pause_rotation_cb(void);
+int appcore_resume_rotation_cb(void);
+
 
 #define ENV_START "APP_START_TIME"
 

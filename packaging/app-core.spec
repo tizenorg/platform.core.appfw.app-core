@@ -1,9 +1,9 @@
 Name:       app-core
 Summary:    Application basic
-Version:	1.2
-Release:    1
+Version:    1.2
+Release:    19
 Group:      TO_BE/FILLED_IN
-License:    Apache-2.0
+License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(vconf)
@@ -18,6 +18,7 @@ BuildRequires:  pkgconfig(ecore-x)
 BuildRequires:  pkgconfig(gobject-2.0)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  cmake
+BuildRequires:  sysman-devel
 
 
 %description
@@ -78,9 +79,11 @@ Application basics template
 %build
 CFLAGS="-I/usr/lib/glib-2.0/include/ -I/usr/include/glib-2.0 -I/usr/lib/dbus-1.0/include -I/usr/include/dbus-1.0 -I/usr/include/e_dbus-1 -I/usr/include/ethumb-0 -I/usr/include/edje-1 -I/usr/include/efreet-1 -I/usr/include/embryo-1 -I/usr/include/ecore-1 -I/usr/include/eet-1 -I/usr/include/evas-1 -I/usr/include/eina-1 -I/usr/include/eina-1/eina  $(CFLAGS)" cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix} -DENABLE_GTK=OFF
 
+
 make %{?jobs:-j%jobs}
 
 %install
+rm -rf %{buildroot}
 %make_install
 
 
@@ -91,6 +94,7 @@ make %{?jobs:-j%jobs}
 %post common -p /sbin/ldconfig
 
 %postun common -p /sbin/ldconfig
+
 
 
 

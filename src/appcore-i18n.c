@@ -129,7 +129,7 @@ EXPORT_API int appcore_get_timeformat(enum appcore_time_format *timeformat)
 		return -1;
 	}
 
-	r = vconf_get_int(VCONFKEY_REGIONFORMAT_TIME1224, timeformat);
+	r = vconf_get_int(VCONFKEY_REGIONFORMAT_TIME1224, (int *)timeformat);
 
 	if (r < 0) {
 		*timeformat = APPCORE_TIME_FORMAT_UNKNOWN;

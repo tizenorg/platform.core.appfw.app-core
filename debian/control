@@ -3,7 +3,7 @@ Section: libs
 Priority: extra
 Maintainer: Jayoun Lee <airjany@samsung.com>, Sewook Park <sewook7.park@samsung.com>, Jaeho Lee <jaeho81.lee@samsung.com>, Yoonkyong Lee <yk6629.lee@samsung.com>
 Uploaders: Wonguk Jeong <wonguk.jeong@samsung.com>, Knhoon Baik <knhoon.baik@samsung.com>, Sangjung Woo <sangjung.woo@samsung.com>, Youmin Ha <youmin.ha@samsung.com>, Noha Park <noha.park@samsung.com>
-Build-Depends: debhelper (>= 5), libslp-sensor-dev, libslp-setting-dev, libelm-dev, libaul-1-dev, librua-dev, dlog-dev, libslp-sysman-dev, libglib2.0-dev
+Build-Depends: debhelper (>= 5), libslp-sensor-dev, libslp-setting-dev, libelm-dev, libaul-1-dev, dlog-dev, libslp-sysman-dev, libglib2.0-dev
 Standards-Version: 3.7.2
 
 Package: libappcore-common-dev

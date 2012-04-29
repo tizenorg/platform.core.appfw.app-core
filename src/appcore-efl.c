@@ -78,18 +78,20 @@ struct win_node {
 	bool bfobscured;
 };
 
-static int WIN_COMP(struct win_node *a, struct win_node *b) 
+static int WIN_COMP(gconstpointer data1, gconstpointer data2)
 {
+	struct win_node *a = (struct win_node *)data1;
+	struct win_node *b = (struct win_node *)data2;
 	return (int)((a->win)-(b->win));
 }
 
-static struct win_node *win_h;
 GSList *g_winnode_list;
 
-
 #if defined(MEMORY_FLUSH_ACTIVATE)
-static Eina_Bool __appcore_memory_flush_cb(struct ui_priv *ui)
+static Eina_Bool __appcore_memory_flush_cb(void *data)
 {
+	struct ui_priv *ui = (struct ui_priv *)data;
+
 	appcore_flush_memory();
 	ui->mftimer = NULL;
 
@@ -135,12 +137,12 @@ static int __appcore_low_memory_post_cb(ui_priv *ui)
 static void __appcore_efl_memory_flush_cb(void)
 {
 	_DBG("[APP %d]   __appcore_efl_memory_flush_cb()", _pid);
-	elm_all_flush();
+	elm_cache_all_flush();
 }
 
 static void __do_app(enum app_event event, void *data, bundle * b)
 {
-	int r;
+	int r = -1;
 	struct ui_priv *ui = data;
 
 	_DBG("[APP %d] Event: %d", _pid, event);
@@ -304,6 +306,8 @@ static bool __delete_win(unsigned int win)
 	g_winnode_list = g_slist_remove_link(g_winnode_list, f);
 
 	free(f->data);
+
+	return TRUE;
 }
 
 static bool __update_win(unsigned int win, bool bfobscured)
