@@ -5,6 +5,7 @@ Release:    19
 Group:      TO_BE/FILLED_IN
 License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
+Source1001: packaging/app-core.manifest 
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(aul)
@@ -77,6 +78,7 @@ Application basics template
 %setup -q 
 
 %build
+cp %{SOURCE1001} .
 CFLAGS="-I/usr/lib/glib-2.0/include/ -I/usr/include/glib-2.0 -I/usr/lib/dbus-1.0/include -I/usr/include/dbus-1.0 -I/usr/include/e_dbus-1 -I/usr/include/ethumb-0 -I/usr/include/edje-1 -I/usr/include/efreet-1 -I/usr/include/embryo-1 -I/usr/include/ecore-1 -I/usr/include/eet-1 -I/usr/include/evas-1 -I/usr/include/eina-1 -I/usr/include/eina-1/eina  $(CFLAGS)" cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix} -DENABLE_GTK=OFF
 
 
@@ -100,17 +102,21 @@ rm -rf %{buildroot}
 
 
 %files efl
+%manifest app-core.manifest
 %{_libdir}/libappcore-efl.so.*
 
 %files efl-devel
+%manifest app-core.manifest
 %{_includedir}/appcore/appcore-efl.h
 %{_libdir}/libappcore-efl.so
 %{_libdir}/pkgconfig/appcore-efl.pc
 
 %files common
+%manifest app-core.manifest
 %{_libdir}/libappcore-common.so.*
 
 %files common-devel
+%manifest app-core.manifest
 %{_libdir}/libappcore-common.so
 %{_libdir}/pkgconfig/appcore-common.pc
 %{_includedir}/appcore/appcore-common.h
