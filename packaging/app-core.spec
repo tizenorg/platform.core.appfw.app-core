@@ -2,9 +2,10 @@ Name:       app-core
 Summary:    Application basic
 Version:    1.2
 Release:    19
-Group:      TO_BE/FILLED_IN
+Group:      System/Base
 License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
+Source101:  packaging/core-efl.target
 Source1001: packaging/app-core.manifest 
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(vconf)
@@ -87,6 +88,8 @@ make %{?jobs:-j%jobs}
 %install
 rm -rf %{buildroot}
 %make_install
+install -d %{buildroot}%{_libdir}/systemd/user/core-efl.target.wants
+install -m0644 %{SOURCE101} %{buildroot}%{_libdir}/systemd/user/
 
 
 %post efl -p /sbin/ldconfig
@@ -114,6 +117,8 @@ rm -rf %{buildroot}
 %files common
 %manifest app-core.manifest
 %{_libdir}/libappcore-common.so.*
+%{_libdir}/systemd/user/core-efl.target
+%{_libdir}/systemd/user/core-efl.target.wants/
 
 %files common-devel
 %manifest app-core.manifest
