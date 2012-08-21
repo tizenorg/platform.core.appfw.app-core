@@ -45,6 +45,7 @@
  * @{
  */
 
+#include <stdbool.h>
 #include <appcore-common.h>
 
 #ifdef __cplusplus
@@ -118,6 +119,44 @@ int main(int argc, char *argv[])
  */
 int appcore_efl_main(const char *name, int *argc, char ***argv,
 		     struct appcore_ops *ops);
+
+/**
+ * @par Description:
+ * This API sets system resource reclaiming.
+ *
+ * @par Purpose:
+ * When this is not enabled, the application doesn't reclaim system resource.
+ *
+ * @param[in] enable Application name
+ *
+ * @return 0 on success, -1 on error (<I>errno</I> set)
+ *
+ *
+ * @pre None.
+ * @post None.
+ * @see None.
+ * @remarks None.
+ *
+ * @par Sample code:
+ * @code
+#include <appcore-efl.h>
+
+int _create(void *data)
+{
+	int r;
+
+	...
+	r = appcore_set_system_resource_reclaiming(FALSE);
+	if (r) {
+		// add exception handling
+		perror("appcore_set_system_resource_reclaiming");
+	}
+	...
+}
+ * @endcode
+ *
+ */
+int appcore_set_system_resource_reclaiming(bool enable);
 
 #ifdef __cplusplus
 }

@@ -37,6 +37,8 @@
 
 static pid_t _pid;
 
+static bool resource_reclaiming = TRUE;
+
 struct ui_priv {
 	const char *name;
 	enum app_state state;
@@ -189,11 +191,11 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 			if (ui->ops->pause)
 				r = ui->ops->pause(ui->ops->data);
 			ui->state = AS_PAUSED;
-			if(r >= 0)
+			if(r >= 0 && resource_reclaiming == TRUE)
 				__appcore_timer_add(ui);
 		}
 		/* TODO : rotation stop */
-		r = appcore_pause_rotation_cb();
+		//r = appcore_pause_rotation_cb();
 
 		sysman_inform_backgrd();
 		break;
@@ -207,7 +209,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 			ui->state = AS_RUNNING;
 		}
 		/*TODO : rotation start*/
-		r = appcore_resume_rotation_cb();
+		//r = appcore_resume_rotation_cb();
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:done]",
 		    ui->name);
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:Launching:done]",
@@ -543,6 +545,13 @@ EXPORT_API int appcore_efl_main(const char *name, int *argc, char ***argv,
 	__after_loop(&priv);
 
 	__unset_data(&priv);
+
+	return 0;
+}
+
+EXPORT_API int appcore_set_system_resource_reclaiming(bool enable)
+{
+	resource_reclaiming = enable;
 
 	return 0;
 }

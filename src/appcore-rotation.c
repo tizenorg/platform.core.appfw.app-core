@@ -26,10 +26,23 @@
 
 #include <sensor.h>
 #include <vconf.h>
+#include <Ecore_X.h>
+#include <Ecore.h>
+#include <X11/Xlib.h>
 
 #include "appcore-internal.h"
 
-#define LCD_TYPE_KEY "memory/sensor/lcd_type"
+#define _MAKE_ATOM(a, s)                              \
+   do {                                               \
+        a = ecore_x_atom_get(s);                      \
+        if (!a)                                       \
+          _ERR("##s creation failed.\n");             \
+   } while(0)
+
+#define STR_ATOM_ROTATION_LOCK                "_E_ROTATION_LOCK"
+
+static Ecore_X_Atom ATOM_ROTATION_LOCK = 0;
+static Ecore_X_Window root;
 
 struct rot_s {
 	int handle;
@@ -66,6 +79,10 @@ static struct rot_evt re_to_rm[] = {
 	},
 };
 
+static enum appcore_rm changed_m;
+static void *changed_data;
+static Ecore_Event_Handler *changed_handle;
+
 static enum appcore_rm __get_mode(int event_data)
 {
 	int i;
@@ -83,11 +100,34 @@ static enum appcore_rm __get_mode(int event_data)
 	return m;
 }
 
+static Eina_Bool __property(void *data, int type, void *event)
+{
+	Ecore_X_Event_Window_Property *ev = event;
+
+	if (!ev)
+		return ECORE_CALLBACK_PASS_ON;
+
+	if (ev->atom == ATOM_ROTATION_LOCK) {
+		_DBG("[APP %d] Rotation: %d -> %d, cb_set : %d", getpid(), rot.mode, changed_m, rot.cb_set);
+		if (rot.cb_set && rot.mode != changed_m) {
+			rot.callback(changed_m, changed_data);
+			rot.mode = changed_m;
+		}
+
+		ecore_event_handler_del(changed_handle);
+		changed_handle = NULL;
+	}
+
+	return ECORE_CALLBACK_PASS_ON;
+}
+
 static void __changed_cb(unsigned int event_type, sensor_event_data_t *event,
 		       void *data)
 {
 	int *cb_event_data;
 	enum appcore_rm m;
+	int ret;
+	int val;
 
 	if (rot.lock)
 		return;
@@ -105,9 +145,22 @@ static void __changed_cb(unsigned int event_type, sensor_event_data_t *event,
 
 	if (rot.callback) {
 		if (rot.cb_set && rot.mode != m) {
-			rot.callback(m, data);
-			rot.mode = m;
+			ret = ecore_x_window_prop_card32_get(root, ATOM_ROTATION_LOCK, &val, 1);
+
+			_DBG("[APP %d] Rotation: %d -> %d, val : %d, ret : %d", getpid(), rot.mode, m, val, ret);
+			if (!val || ret < 1) {
+				rot.callback(m, data);
+				rot.mode = m;
+			} else {
+				changed_data = data;
+				if(changed_handle) {
+					 ecore_event_handler_del(changed_handle);
+  					 changed_handle = NULL;
+				}
+				changed_handle = ecore_event_handler_add(ECORE_X_EVENT_WINDOW_PROPERTY, __property, NULL);
+			}
 		}
+		changed_m = m;
 	}
 }
 
@@ -115,6 +168,8 @@ static void __lock_cb(keynode_t *node, void *data)
 {
 	int r;
 	enum appcore_rm m;
+	int ret;
+	int val;
 
 	rot.lock = vconf_keynode_get_bool(node);
 
@@ -130,9 +185,21 @@ static void __lock_cb(keynode_t *node, void *data)
 			_DBG("[APP %d] Rotmode prev %d -> curr %d", getpid(),
 			     rot.mode, m);
 			if (!r && rot.mode != m) {
-				rot.callback(m, data);
-				rot.mode = m;
+				if(!val) {
+					rot.callback(m, data);
+					rot.mode = m;
+				} else {
+					changed_data = data;
+					if(changed_handle) {
+						 ecore_event_handler_del(changed_handle);
+  						 changed_handle = NULL;
+					}
+					changed_handle = ecore_event_handler_add(ECORE_X_EVENT_WINDOW_PROPERTY, __property, NULL);
+				}
 			}
+
+			if(!r)
+				changed_m = m;
 		}
 	}
 }
@@ -209,6 +276,10 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (enum appcore_rm, void *),
 
 	rot.handle = handle;
 	__add_rotlock(data);
+
+	_MAKE_ATOM(ATOM_ROTATION_LOCK, STR_ATOM_ROTATION_LOCK );
+	root =  ecore_x_window_root_first_get();
+	XSelectInput(ecore_x_display_get(), root, PropertyChangeMask);
 
 	return 0;
 }

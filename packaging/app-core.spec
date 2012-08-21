@@ -1,7 +1,8 @@
+
 Name:       app-core
 Summary:    Application basic
 Version:    1.2
-Release:    19
+Release:    25
 Group:      TO_BE/FILLED_IN
 License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
@@ -100,20 +101,23 @@ rm -rf %{buildroot}
 
 
 %files efl
+%defattr(-,root,root,-)
 %{_libdir}/libappcore-efl.so.*
 
 %files efl-devel
+%defattr(-,root,root,-)
 %{_includedir}/appcore/appcore-efl.h
 %{_libdir}/libappcore-efl.so
 %{_libdir}/pkgconfig/appcore-efl.pc
 
 %files common
+%defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so.*
 
 %files common-devel
+%defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so
 %{_libdir}/pkgconfig/appcore-common.pc
 %{_includedir}/appcore/appcore-common.h
 %{_includedir}/SLP_Appcore_PG.h
-
 

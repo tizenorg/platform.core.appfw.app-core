@@ -41,6 +41,7 @@
 
 #define PKGNAME_MAX 256
 #define PATH_APP_ROOT "/opt/apps"
+#define PATH_RO_APP_ROOT "/usr/apps"
 #define PATH_RES "/res"
 #define PATH_LOCALE "/locale"
 
@@ -145,6 +146,10 @@ static int __get_dir_name(char *dirname)
 	aul_app_get_pkgname_bypid(pid, pkg_name, PKGNAME_MAX);
 
 	r = snprintf(dirname, PATH_MAX, PATH_APP_ROOT "/%s" PATH_RES PATH_LOCALE,pkg_name);
+	if (r < 0)
+		return -1;
+	if (access(dirname, R_OK) == 0) return 0;
+	r = snprintf(dirname, PATH_MAX, PATH_RO_APP_ROOT "/%s" PATH_RES PATH_LOCALE,pkg_name);
 	if (r < 0)
 		return -1;
 
