@@ -349,11 +349,22 @@ static bool __update_win(unsigned int win, bool bfobscured)
 
 }
 
+Ecore_X_Atom atom_parent;
+
 static Eina_Bool __show_cb(void *data, int type, void *event)
 {
 	Ecore_X_Event_Window_Show *ev;
+	int ret;
+	Ecore_X_Window parent;
 
 	ev = event;
+
+	ret = ecore_x_window_prop_window_get(ev->win, atom_parent, &parent, 1);
+	if (ret != 1)
+	{
+		// This is child window. Skip!!!
+		return ECORE_CALLBACK_PASS_ON;
+	}
 
 	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x\n", ev->win);
 
@@ -417,6 +428,12 @@ static Eina_Bool __visibility_cb(void *data, int type, void *event)
 static void __add_climsg_cb(struct ui_priv *ui)
 {
 	_ret_if(ui == NULL);
+
+	atom_parent = ecore_x_atom_get("_E_PARENT_BORDER_WINDOW");
+	if (!atom_parent)
+	{
+		// Do Error Handling
+	}
 
 	ui->hshow =
 	    ecore_event_handler_add(ECORE_X_EVENT_WINDOW_SHOW, __show_cb, ui);
