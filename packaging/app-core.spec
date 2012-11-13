@@ -2,7 +2,7 @@
 Name:       app-core
 Summary:    Application basic
 Version:    1.2
-Release:    28
+Release:    34
 Group:      TO_BE/FILLED_IN
 License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
@@ -104,6 +104,7 @@ install -m0644 %{SOURCE101} %{buildroot}%{_libdir}/systemd/user/
 
 
 %files efl
+%manifest app-core.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-efl.so.*
 
@@ -114,6 +115,7 @@ install -m0644 %{SOURCE101} %{buildroot}%{_libdir}/systemd/user/
 %{_libdir}/pkgconfig/appcore-efl.pc
 
 %files common
+%manifest app-core.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so.*
 %{_libdir}/systemd/user/core-efl.target

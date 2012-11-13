@@ -74,7 +74,7 @@ static const char *_as_name[] = {
 	[AS_DYING] = "DYING",
 };
 
-static bool b_active = 1;
+static bool b_active = 0;
 struct win_node {
 	unsigned int win;
 	bool bfobscured;
@@ -457,6 +457,13 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 
 	g_type_init();
 	elm_init(*argc, *argv);
+
+	if(getenv("opengl_x11")) {
+		elm_config_preferred_engine_set("opengl_x11");
+		_DBG("elm_config_preferred_engine_set");
+	} else {
+		_DBG("opengl_x11 is not set");
+	}
 
 	r = appcore_init(ui->name, &efl_ops, *argc, *argv);
 	_retv_if(r == -1, -1);
