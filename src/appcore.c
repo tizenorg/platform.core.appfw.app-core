@@ -40,7 +40,7 @@
 #define SQLITE_FLUSH_MAX		(1024*1024)
 
 #define PKGNAME_MAX 256
-#define PATH_APP_ROOT "/opt/apps"
+#define PATH_APP_ROOT "/opt/usr/apps"
 #define PATH_RO_APP_ROOT "/usr/apps"
 #define PATH_RES "/res"
 #define PATH_LOCALE "/locale"
