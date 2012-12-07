@@ -448,6 +448,7 @@ static void __add_climsg_cb(struct ui_priv *ui)
 static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 {
 	int r;
+	char *hwacc = NULL;
 
 	if (argc == NULL || argv == NULL) {
 		_ERR("argc/argv is NULL");
@@ -458,11 +459,18 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 	g_type_init();
 	elm_init(*argc, *argv);
 
-	if(getenv("opengl_x11")) {
+	hwacc = getenv("HWACC");
+
+	if(hwacc == NULL) {
+		_DBG("elm_config_preferred_engine_set is not called");
+	} else if(strcmp(hwacc, "USE") == 0) {
 		elm_config_preferred_engine_set("opengl_x11");
-		_DBG("elm_config_preferred_engine_set");
+		_DBG("elm_config_preferred_engine_set : opengl_x11");
+	} else if(strcmp(hwacc, "NOT_USE") == 0) {
+		elm_config_preferred_engine_set("software_x11");
+		_DBG("elm_config_preferred_engine_set : software_x11");
 	} else {
-		_DBG("opengl_x11 is not set");
+		_DBG("elm_config_preferred_engine_set is not called");
 	}
 
 	r = appcore_init(ui->name, &efl_ops, *argc, *argv);
