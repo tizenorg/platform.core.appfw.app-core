@@ -24,7 +24,7 @@
 #ifndef __APPCORE_INTERNAL_H__
 #define __APPCORE_INTERNAL_H__
 
-#define LOG_TAG "Appcore"
+#define LOG_TAG "APP_CORE"
 
 #include <stdio.h>
 #include <dlog.h>
