@@ -96,6 +96,7 @@ static Eina_Bool __appcore_memory_flush_cb(void *data)
 
 	appcore_flush_memory();
 	ui->mftimer = NULL;
+	printf("test\n");
 
 	return ECORE_CALLBACK_CANCEL;
 }
