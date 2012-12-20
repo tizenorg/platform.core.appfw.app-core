@@ -152,7 +152,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	_ret_if(ui == NULL || event >= AE_MAX);
 	_DBG("[APP %d] Event: %s State: %s", _pid, _ae_name[event],
 	     _as_name[ui->state]);
-
+	printf("test");
 	if (event == AE_MEM_FLUSH) {
 		ui->mfcb();
 		return;
