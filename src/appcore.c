@@ -143,7 +143,8 @@ static int __get_dir_name(char *dirname)
 	if (pid < 0)
 		return -1;
 
-	aul_app_get_pkgname_bypid(pid, pkg_name, PKGNAME_MAX);
+	if (aul_app_get_pkgname_bypid(pid, pkg_name, PKGNAME_MAX) != AUL_R_OK)
+		return -1;
 
 	r = snprintf(dirname, PATH_MAX, PATH_APP_ROOT "/%s" PATH_RES PATH_LOCALE,pkg_name);
 	if (r < 0)
