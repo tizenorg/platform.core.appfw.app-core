@@ -132,7 +132,7 @@ static void __lock_cb(keynode_t *node, void *data)
 	enum appcore_rm m;
 	int ret;
 
-	rot.lock = vconf_keynode_get_bool(node);
+	rot.lock = !vconf_keynode_get_bool(node);
 
 	if (rot.lock) {
 		m = APPCORE_RM_PORTRAIT_NORMAL;
@@ -164,20 +164,20 @@ static void __add_rotlock(void *data)
 	int lock;
 
 	lock = 0;
-	r = vconf_get_bool(VCONFKEY_SETAPPL_ROTATE_LOCK_BOOL, &lock);
+	r = vconf_get_bool(VCONFKEY_SETAPPL_AUTO_ROTATE_SCREEN_BOOL, &lock);
 	if (r) {
 		_DBG("[APP %d] Rotation vconf get bool failed", getpid());
 	}
 
-	rot.lock = lock;
+	rot.lock = !lock;
 
-	vconf_notify_key_changed(VCONFKEY_SETAPPL_ROTATE_LOCK_BOOL, __lock_cb,
+	vconf_notify_key_changed(VCONFKEY_SETAPPL_AUTO_ROTATE_SCREEN_BOOL, __lock_cb,
 				 data);
 }
 
 static void __del_rotlock(void)
 {
-	vconf_ignore_key_changed(VCONFKEY_SETAPPL_ROTATE_LOCK_BOOL, __lock_cb);
+	vconf_ignore_key_changed(VCONFKEY_SETAPPL_AUTO_ROTATE_SCREEN_BOOL, __lock_cb);
 	rot.lock = 0;
 }
 
