@@ -1,0 +1,15 @@
+#
+# This virtual unit maps the default core components and their dependencies.
+#
+# The real desktop services should go into the final desktop target
+# folder, which should require this virtual target. While starting
+# up, systemd will assure that the core EFL and daemons start before
+# anything else. After the core target finishes, dependencies should
+# not matter too much anymore and less fine-grained dependencies can
+# be used.
+#
+
+[Unit]
+Description=Core EFL UI target
+After=xorg.target
+Requires=xorg.target
