@@ -232,18 +232,33 @@ static int __sys_do(struct appcore *ac, enum sys_event event)
 
 static int __sys_lowmem_post(void *data, void *evt)
 {
+	keynode_t *key = evt;
+	int val;
+
+	val = vconf_keynode_get_int(key);
+
+	if (val >= VCONFKEY_SYSMAN_LOW_MEMORY_SOFT_WARNING)	{
 #if defined(MEMORY_FLUSH_ACTIVATE)
-	struct appcore *ac = data;
-	ac->ops->cb_app(AE_LOWMEM_POST, ac->ops->data, NULL);
+		struct appcore *ac = data;
+		ac->ops->cb_app(AE_LOWMEM_POST, ac->ops->data, NULL);
 #else
-	malloc_trim(0);
+		malloc_trim(0);
 #endif
+	}
 	return 0;
 }
 
 static int __sys_lowmem(void *data, void *evt)
 {
-	return __sys_do(data, SE_LOWMEM);
+	keynode_t *key = evt;
+	int val;
+
+	val = vconf_keynode_get_int(key);
+
+	if (val >= VCONFKEY_SYSMAN_LOW_MEMORY_SOFT_WARNING)
+		return __sys_do(data, SE_LOWMEM);
+
+	return 0;
 }
 
 static int __sys_lowbatt(void *data, void *evt)

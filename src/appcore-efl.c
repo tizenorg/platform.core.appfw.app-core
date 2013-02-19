@@ -26,6 +26,9 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <Ecore_X.h>
+#include <Ecore.h>
+#include <Ecore_Evas.h>
+#include <Ecore_Input_Evas.h>
 #include <Elementary.h>
 #include <glib-object.h>
 #include <malloc.h>
@@ -46,11 +49,19 @@ struct ui_priv {
 	Ecore_Event_Handler *hshow;
 	Ecore_Event_Handler *hhide;
 	Ecore_Event_Handler *hvchange;
+	Ecore_Event_Handler *hcmsg; /* WM_ROTATE */
 
 	Ecore_Timer *mftimer;	/* Ecore Timer for memory flushing */
 
 	struct appcore_ops *ops;
 	void (*mfcb) (void);	/* Memory Flushing Callback */
+
+	/* WM_ROTATE */
+	int wm_rot_supported;
+	int rot_started;
+	int (*rot_cb) (enum appcore_rm, void *);
+	void *rot_cb_data;
+	enum appcore_rm rot_mode;
 };
 
 static struct ui_priv priv;
@@ -80,6 +91,8 @@ struct win_node {
 	bool bfobscured;
 };
 
+static struct ui_wm_rotate wm_rotate;
+
 static int WIN_COMP(gconstpointer data1, gconstpointer data2)
 {
 	struct win_node *a = (struct win_node *)data1;
@@ -87,7 +100,7 @@ static int WIN_COMP(gconstpointer data1, gconstpointer data2)
 	return (int)((a->win)-(b->win));
 }
 
-GSList *g_winnode_list;
+GSList *g_winnode_list = NULL;
 
 #if defined(MEMORY_FLUSH_ACTIVATE)
 static Eina_Bool __appcore_memory_flush_cb(void *data)
@@ -349,6 +362,64 @@ static bool __update_win(unsigned int win, bool bfobscured)
 
 }
 
+/* WM_ROTATE */
+static Ecore_X_Atom _WM_WINDOW_ROTATION_SUPPORTED = 0;
+static Ecore_X_Atom _WM_WINDOW_ROTATION_CHANGE_REQUEST = 0;
+
+static int __check_wm_rotation_support(void)
+{
+	Ecore_X_Window root, win, win2;
+	int ret;
+
+	if (!_WM_WINDOW_ROTATION_SUPPORTED) {
+		_WM_WINDOW_ROTATION_SUPPORTED =
+					ecore_x_atom_get("_E_WINDOW_ROTATION_SUPPORTED");
+	}
+
+	if (!_WM_WINDOW_ROTATION_CHANGE_REQUEST) {
+		_WM_WINDOW_ROTATION_CHANGE_REQUEST =
+					ecore_x_atom_get("_E_WINDOW_ROTATION_CHANGE_REQUEST");
+	}
+
+	root = ecore_x_window_root_first_get();
+	ret = ecore_x_window_prop_xid_get(root,
+			_WM_WINDOW_ROTATION_SUPPORTED,
+			ECORE_X_ATOM_WINDOW,
+			&win, 1);
+	if ((ret == 1) && (win))
+	{
+		ret = ecore_x_window_prop_xid_get(win,
+				_WM_WINDOW_ROTATION_SUPPORTED,
+				ECORE_X_ATOM_WINDOW,
+				&win2, 1);
+		if ((ret == 1) && (win2 == win))
+			return 0;
+	}
+
+	return -1;
+}
+
+static void __set_wm_rotation_support(unsigned int win, unsigned int set)
+{
+	GSList *iter = NULL;
+	struct win_node *entry = NULL;
+
+	if (0 == win) {
+		for (iter = g_winnode_list; iter != NULL; iter = g_slist_next(iter)) {
+			entry = iter->data;
+			if (entry->win) {
+				ecore_x_window_prop_card32_set(entry->win,
+						_WM_WINDOW_ROTATION_SUPPORTED,
+						&set, 1);
+			}
+		}
+	} else {
+		ecore_x_window_prop_card32_set(win,
+				_WM_WINDOW_ROTATION_SUPPORTED,
+				&set, 1);
+	}
+}
+
 Ecore_X_Atom atom_parent;
 
 static Eina_Bool __show_cb(void *data, int type, void *event)
@@ -368,8 +439,13 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 
 	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x\n", ev->win);
 
-	if (!__exist_win((unsigned int)ev->win))
+	if (!__exist_win((unsigned int)ev->win)) {
+		/* WM_ROTATE */
+		if ((priv.wm_rot_supported) && (1 == priv.rot_started)) {
+			__set_wm_rotation_support(ev->win, 1);
+		}
 		__add_win((unsigned int)ev->win);
+	}
 	else
 		__update_win((unsigned int)ev->win, FALSE);
 
@@ -425,6 +501,41 @@ static Eina_Bool __visibility_cb(void *data, int type, void *event)
 
 }
 
+/* WM_ROTATE */
+static Eina_Bool __cmsg_cb(void *data, int type, void *event)
+{
+	struct ui_priv *ui = (struct ui_priv *)data;
+	Ecore_X_Event_Client_Message *e = event;
+
+	if (!ui) return ECORE_CALLBACK_PASS_ON;
+	if (e->format != 32) return ECORE_CALLBACK_PASS_ON;
+	if (e->message_type == _WM_WINDOW_ROTATION_CHANGE_REQUEST) {
+		if ((0 == ui->wm_rot_supported) ||
+			(0 == ui->rot_started) ||
+			(NULL == ui->rot_cb)) {
+			return ECORE_CALLBACK_PASS_ON;
+		}
+
+		enum appcore_rm rm;
+		switch (e->data.l[1])
+		{
+			case   0: rm = APPCORE_RM_PORTRAIT_NORMAL;   break;
+			case  90: rm = APPCORE_RM_LANDSCAPE_REVERSE; break;
+			case 180: rm = APPCORE_RM_PORTRAIT_REVERSE;  break;
+			case 270: rm = APPCORE_RM_LANDSCAPE_NORMAL;  break;
+			default:  rm = APPCORE_RM_UNKNOWN;           break;
+		}
+
+		ui->rot_mode = rm;
+
+		if (APPCORE_RM_UNKNOWN != rm) {
+			ui->rot_cb(rm, ui->rot_cb_data);
+		}
+	}
+
+	return ECORE_CALLBACK_PASS_ON;
+}
+
 static void __add_climsg_cb(struct ui_priv *ui)
 {
 	_ret_if(ui == NULL);
@@ -443,6 +554,14 @@ static void __add_climsg_cb(struct ui_priv *ui)
 	    ecore_event_handler_add(ECORE_X_EVENT_WINDOW_VISIBILITY_CHANGE,
 				    __visibility_cb, ui);
 
+	/* Add client message callback for WM_ROTATE */
+	if(!__check_wm_rotation_support())
+	{
+		ui->hcmsg =
+			ecore_event_handler_add(ECORE_X_EVENT_CLIENT_MESSAGE, __cmsg_cb, ui);
+		ui->wm_rot_supported = 1;
+		appcore_set_wm_rotation(&wm_rotate);
+	}
 }
 
 static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
@@ -545,6 +664,13 @@ static int __set_data(struct ui_priv *ui, const char *name,
 
 	_pid = getpid();
 
+	/* WM_ROTATE */
+	ui->wm_rot_supported = 0;
+	ui->rot_started = 0;
+	ui->rot_cb = NULL;
+	ui->rot_cb_data = NULL;
+	ui->rot_mode = APPCORE_RM_UNKNOWN;
+
 	return 0;
 }
 
@@ -555,6 +681,80 @@ static void __unset_data(struct ui_priv *ui)
 
 	memset(ui, 0, sizeof(struct ui_priv));
 }
+
+/* WM_ROTATE */
+static int __wm_set_rotation_cb(int (*cb) (enum appcore_rm, void *), void *data)
+{
+	if (cb == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if ((priv.wm_rot_supported) && (0 == priv.rot_started)) {
+		__set_wm_rotation_support(0, 1);
+	}
+
+	priv.rot_cb = cb;
+	priv.rot_cb_data = data;
+	priv.rot_started = 1;
+
+	return 0;
+}
+
+static int __wm_unset_rotation_cb(void)
+{
+	if ((priv.wm_rot_supported) && (1 == priv.rot_started)) {
+		__set_wm_rotation_support(0, 0);
+	}
+
+	priv.rot_cb = NULL;
+	priv.rot_cb_data = NULL;
+	priv.rot_started = 0;
+
+	return 0;
+}
+
+static int __wm_get_rotation_state(enum appcore_rm *curr)
+{
+	if (curr == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	*curr = priv.rot_mode;
+
+	return 0;
+}
+
+static int __wm_pause_rotation_cb(void)
+{
+	if ((1 == priv.rot_started) && (priv.wm_rot_supported)) {
+		__set_wm_rotation_support(0, 0);
+	}
+
+	priv.rot_started = 0;
+
+	return 0;
+}
+
+static int __wm_resume_rotation_cb(void)
+{
+	if ((0 == priv.rot_started) && (priv.wm_rot_supported)) {
+		__set_wm_rotation_support(0, 1);
+	}
+
+	priv.rot_started = 1;
+
+	return 0;
+}
+
+static struct ui_wm_rotate wm_rotate = {
+	__wm_set_rotation_cb,
+	__wm_unset_rotation_cb,
+	__wm_get_rotation_state,
+	__wm_pause_rotation_cb,
+	__wm_resume_rotation_cb
+};
 
 EXPORT_API int appcore_efl_main(const char *name, int *argc, char ***argv,
 				struct appcore_ops *ops)
