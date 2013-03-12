@@ -1,0 +1,864 @@
+app-core (1.2-22) unstable; urgency=low
+
+  * Add error handle for ecore_x_window_prop_card32_get
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-22
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Sun, 13 May 2012 17:50:08 +0900
+
+app-core (1.2-21) unstable; urgency=low
+
+  * Updated rotation code
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-21
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 17 Apr 2012 16:47:13 +0900
+
+app-core (1.2-20) unstable; urgency=low
+
+  * Add appcore_set_system_resource_reclaiming API
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-20
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Thu, 29 Mar 2012 10:42:28 +0900
+
+app-core (1.2-19) unstable; urgency=low
+
+  * Fixed compile warnings
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-19
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 20 Mar 2012 13:51:26 +0900
+
+app-core (1.2-18) unstable; urgency=low
+
+  * API Changes in elementary
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-18
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 13 Mar 2012 17:45:24 +0900
+
+app-core (1.2-17) unstable; urgency=low
+
+  * Added window checking in __get_win_pid()
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-17
+
+ -- Sewook Park <sewook7.park@samsung.com>  Mon, 05 Mar 2012 17:21:51 +0900
+
+app-core (1.2-16) unstable; urgency=low
+
+  * Add aul_finalize()
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-16
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 28 Feb 2012 16:57:59 +0900
+
+app-core (1.2-15) unstable; urgency=low
+
+  * Remove rua
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-15
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Wed, 15 Feb 2012 19:06:18 +0900
+
+app-core (1.2-14) unstable; urgency=low
+
+  * About elm_all_flush issue
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-14
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Thu, 26 Jan 2012 17:33:57 +0900
+
+app-core (1.2-13) unstable; urgency=low
+
+  * Change window raise to send active request
+  * Git: slp/pkgs/a/app-core
+  * Tag: app-core_1.2-13
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Wed, 18 Jan 2012 19:31:33 +0900
+
+app-core (1.2-12) unstable; urgency=low
+
+  * Add appcore_set_pre_resume_cb API
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-12
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 10 Jan 2012 15:37:07 +0900
+
+app-core (1.2-11) unstable; urgency=low
+
+  * remove app-template
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-11
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 06 Dec 2011 11:15:26 +0900
+
+app-core (1.2-10) unstable; urgency=low
+
+  * Changed boilerplate
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-10
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Mon, 05 Dec 2011 16:40:38 +0900
+
+app-core (1.2-9) unstable; urgency=low
+
+  * Change XInternAtom function arg
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-9
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 15 Nov 2011 17:41:00 +0900
+
+app-core (1.2-8) unstable; urgency=low
+
+  * Modify XInternAtom function arg
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-8 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 08 Nov 2011 11:22:50 +0900
+
+app-core (1.2-7) unstable; urgency=low
+
+  * Changed Boilerplate as per the guideline
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-7 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Mon, 07 Nov 2011 16:55:09 +0900
+
+app-core (1.2-6) unstable; urgency=low
+
+  * Modify appcore-roration.c
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-6 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Mon, 24 Oct 2011 16:39:12 +0900
+
+app-core (1.2-5) unstable; urgency=low
+
+  * Fix rotation bug 
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-5 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 11 Oct 2011 19:24:34 +0900
+
+app-core (1.2-4) unstable; urgency=low
+
+  * Code cleanup
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-4 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 06 Sep 2011 11:31:50 +0900
+
+app-core (1.2-3) unstable; urgency=low
+
+  * Code cleanup
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-3
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Mon, 05 Sep 2011 20:18:22 +0900
+
+app-core (1.2-2) unstable; urgency=low
+
+  * Include stdbool.h
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-2 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Mon, 05 Sep 2011 15:58:21 +0900
+
+app-core (1.2-1) unstable; urgency=low
+
+  * Fix set i18n bug
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-1
+
+ --  Jaeho Lee <jaeho81.lee@samsung.com>  Wed, 31 Aug 2011 19:29:14 +0900
+
+app-core (1.2-0) unstable; urgency=low
+
+  * Remove gtk package and sglib dependency
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.2-0 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 30 Aug 2011 22:18:52 +0900
+
+app-core (1.1-64) unstable; urgency=low
+
+  * Fix TC build error
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-64 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Fri, 19 Aug 2011 15:18:54 +0900
+
+app-core (1.1-63) unstable; urgency=low
+
+  * Fix hide callback
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-63 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Wed, 17 Aug 2011 15:16:41 +0900
+
+app-core (1.1-62) unstable; urgency=low
+
+  * Modify Tc Makefile
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-62 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Tue, 16 Aug 2011 14:45:31 +0900
+
+app-core (1.1-61) unstable; urgency=low
+
+  * Apply code cleanup
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-61 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Wed, 03 Aug 2011 15:55:14 +0900
+
+app-core (1.1-60) unstable; urgency=low
+
+  * Fix resume rotation callback on rotation lock state
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-60
+
+ -- Sewook Park <sewook7.park@samsung.com>  Thu, 28 Jul 2011 12:36:54 +0900
+
+app-core (1.1-59) unstable; urgency=low
+
+  * Paunse & resume
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-59 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Fri, 22 Jul 2011 13:11:13 +0900
+
+app-core (1.1-58) unstable; urgency=low
+
+  * Code cleanup
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-58 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Wed, 13 Jul 2011 16:05:54 +0900
+
+app-core (1.1-57) unstable; urgency=low
+
+  * Add time format change event
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-57 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Fri, 17 Jun 2011 14:48:31 +0900
+
+app-core (1.1-56) unstable; urgency=low
+
+  * Modify setlocale call in _set_i18n
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-56 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Mon, 06 Jun 2011 15:23:05 +0900
+
+app-core (1.1-55) unstable; urgency=low
+
+  * Add region format change event
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-55 
+
+ -- Jaeho Lee <jaeho81.lee@samsung.com>  Fri, 03 Jun 2011 10:52:16 +0900
+
+app-core (1.1-54) unstable; urgency=low
+
+  * Modify appcore-gtk build error 
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-54
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Thu, 28 Apr 2011 20:54:25 +0900
+
+app-core (1.1-53) unstable; urgency=low
+
+  * Modify gtk-template
+  * Deleting ecore event handlers before elm_shutdown 
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-53
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Thu, 28 Apr 2011 14:17:37 +0900
+
+app-core (1.1-52) unstable; urgency=low
+
+  * Modify app-template - remove deb. from pkgname
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-52
+
+ -- Noha Park <noha.park@samsung.com>  Thu, 21 Apr 2011 10:38:16 +0900
+
+app-core (1.1-51) unstable; urgency=low
+
+  * Modify app-template - remove deb. from pkgname
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-51
+
+ -- Noha Park <noha.park@samsung.com>  Thu, 21 Apr 2011 09:15:02 +0900
+
+app-core (1.1-50) unstable; urgency=low
+
+  * Modify app-template for sb2
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-50
+
+ -- Noha Park <noha.park@samsung.com>  Tue, 05 Apr 2011 14:29:12 +0900
+
+app-core (1.1-49) unstable; urgency=low
+
+  * Modify app-template for sb2
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-49
+
+ -- Noha Park <noha.park@samsung.com>  Tue, 05 Apr 2011 12:09:20 +0900
+
+app-core (1.1-48) unstable; urgency=low
+
+  * Disable forcefully setting window focus
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-48
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Tue, 08 Mar 2011 08:37:58 +0900
+
+app-core (1.1-47) unstable; urgency=low
+
+  * disable stack_trim
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-47
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Fri, 04 Mar 2011 00:21:57 +0900
+
+app-core (1.1-46) unstable; urgency=low
+
+  * changelog update
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-46 
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Thu, 03 Mar 2011 22:39:15 +0900
+
+app-core (1.1-45) unstable; urgency=low
+
+  * Add appcore_flush_memory() - request from Memory TF
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-45 
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Thu, 03 Mar 2011 16:12:27 +0900
+
+app-core (1.1-44) unstable; urgency=low
+
+  * Fix tut-tut message
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-44
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Mon, 21 Feb 2011 16:09:24 +0900
+
+app-core (1.1-43) unstable; urgency=low
+
+  * Enable elm_flush_all
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-43 
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Mon, 14 Feb 2011 10:51:52 +0900
+
+app-core (1.1-42) unstable; urgency=low
+
+  * Rollback elm_flush_all temporarily for MWC
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-42
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Tue, 08 Feb 2011 09:58:20 +0900
+
+app-core (1.1-41) unstable; urgency=low
+
+  * Enable elm_flush_all
+  * Remove deprecated PM-related APIs
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-41
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Mon, 07 Feb 2011 14:13:48 +0900
+
+app-core (1.1-40) unstable; urgency=low
+
+  * Modify default action for low battery
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-40
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Wed, 26 Jan 2011 08:16:17 +0900
+
+app-core (1.1-39) unstable; urgency=low
+
+  * Modify app template
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-39
+
+ -- Noha Park <noha.park@samsung.com>  Mon, 24 Jan 2011 11:29:24 +0900
+
+app-core (1.1-38) unstable; urgency=low
+
+  * Modify app template
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-38
+
+ -- Noha Park <noha.park@samsung.com>  Mon, 24 Jan 2011 11:16:09 +0900
+
+app-core (1.1-37) unstable; urgency=low
+
+  * Modify app template
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-37
+
+ -- Noha Park <noha.park@samsung.com>  Mon, 24 Jan 2011 11:03:17 +0900
+
+app-core (1.1-36) unstable; urgency=low
+
+  * Modify app template
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-36
+
+ -- Noha Park <noha.park@samsung.com>  Wed, 19 Jan 2011 10:45:13 +0900
+
+app-core (1.1-35) unstable; urgency=low
+
+  * Modify app template
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-35
+
+ -- Noha Park <noha.park@samsung.com>  Mon, 17 Jan 2011 08:33:26 +0900
+
+app-core (1.1-34) unstable; urgency=low
+
+  * Modify measure time and tc
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-34
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Fri, 07 Jan 2011 20:23:51 +0900
+
+app-core (1.1-33) unstable; urgency=low
+
+  * Modify log typo: request from Jayoun Lee <airjany@samsung.com>
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core
+  * Tag: app-core_1.1-33
+
+ -- Yoonkyong Lee <yk6629.lee@samsung.com>  Thu, 06 Jan 2011 19:13:21 +0900
+
+app-core (1.1-32) unstable; urgency=low
+
+  * Modify history information
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core 
+  * Tag: app-core_1.1-32
+
+ -- Noha Park <noha.park@samsung.com>  Thu, 16 Dec 2010 11:01:03 +0900
+
+app-core (1.1-31) unstable; urgency=low
+
+  * Remove vconf set for security
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core 
+  * Tag: app-core_1.1-31
+
+ -- Noha Park <noha.park@samsung.com>  Mon, 13 Dec 2010 12:27:29 +0900
+
+app-core (1.1-30) unstable; urgency=low
+
+  * Remove vconf set for security
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core 
+  * Tag: app-core_1.1-30
+
+ -- Noha Park <noha.park@samsung.com>  Mon, 13 Dec 2010 11:37:06 +0900
+
+app-core (1.1-29) unstable; urgency=low
+
+  * add time log: from Jayoun Lee <airjany@samasung.com>
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core 
+  * Tag: app-core_1.1-29
+
+ -- Youmin Ha <youmin.ha@samsung.com>  Sat, 11 Dec 2010 16:56:33 +0900
+
+app-core (1.1-28) unstable; urgency=low
+
+  * Modify Low battery level
+  * Git: slp-source.sec.samsung.net:slp/pkgs/a/app-core 
+  * Tag: app-core_1.1-28
+
+ -- Noha Park <noha.park@samsung.com>  Thu, 09 Dec 2010 12:01:44 +0900
+
+app-core (1.1-27) unstable; urgency=low
+
+  * Modify template generation code
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-27
+
+ -- Noha Park <noha.park@samsung.com>  Fri, 03 Dec 2010 17:28:48 +0900
+
+app-core (1.1-26) unstable; urgency=low
+
+  * Remove sysman internal dev dependency
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-26
+
+ -- Noha Park <noha.park@samsung.com>  Wed, 01 Dec 2010 13:23:13 +0900
+
+app-core (1.1-25) unstable; urgency=low
+
+  * Remove sysman internal dev dependency
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-25
+
+ -- Noha Park <noha.park@samsung.com>  Wed, 01 Dec 2010 10:28:00 +0900
+
+app-core (1.1-24) unstable; urgency=low
+
+  * Modify Doxyzen
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-24
+
+ -- Noha Park <noha.park@samsung.com>  Tue, 16 Nov 2010 15:40:30 +0900
+
+app-core (1.1-23) unstable; urgency=low
+
+  * add stk_watch_property_notify_for_root API
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-23
+
+ -- Noha Park <noha.park@samsung.com>  Fri, 12 Nov 2010 10:13:37 +0900
+
+app-core (1.1-22) unstable; urgency=low
+
+  * update_rua
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-22
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Mon, 25 Oct 2010 11:10:11 +0900
+
+app-core (1.1-21) unstable; urgency=low
+
+  * add VERSION property and set major to SOVERSION
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-21
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Tue, 19 Oct 2010 18:39:47 +0900
+
+app-core (1.1-20) unstable; urgency=low
+
+  * change debug messages
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-20
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Thu, 14 Oct 2010 16:00:14 +0900
+
+app-core (1.1-19) unstable; urgency=low
+
+  * bug fix: get pid from client message
+  * add STK ISE init
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-19
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Wed, 13 Oct 2010 15:38:18 +0900
+
+app-core (1.1-18) unstable; urgency=low
+
+  * bug fix: GTK build script
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-18
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Thu, 07 Oct 2010 14:15:01 +0900
+
+app-core (1.1-17) unstable; urgency=low
+
+  * add sysman foreground/background API
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-17
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Wed, 06 Oct 2010 16:10:37 +0900
+
+app-core (1.1-16) unstable; urgency=low
+
+  * add GLES template
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-16
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Tue, 05 Oct 2010 17:18:58 +0900
+
+app-core (1.1-15) unstable; urgency=low
+
+  * update PG and doxygen
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-15
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Fri, 01 Oct 2010 14:24:52 +0900
+
+app-core (1.1-14) unstable; urgency=low
+
+  * add rotation lock
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-14
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Tue, 28 Sep 2010 19:19:52 +0900
+
+app-core (1.1-13) unstable; urgency=low
+
+  * add quickpanel state
+  * check aul API return value
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-13
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Mon, 20 Sep 2010 13:07:17 +0900
+
+app-core (1.1-12) unstable; urgency=low
+
+  * EFL upgrade
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-12
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Fri, 10 Sep 2010 20:56:34 +0900
+
+app-core (1.1-11) unstable; urgency=low
+
+  * print launch time which is from aul to first idle
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-11
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Tue, 07 Sep 2010 11:19:57 +0900
+
+app-core (1.1-10) unstable; urgency=low
+
+  * check a value when Battery low vconf changed
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-10
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Fri, 27 Aug 2010 16:52:59 +0900
+
+app-core (1.1-9) unstable; urgency=low
+
+  * add Programming Guide
+  * code cleanup
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-9
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Fri, 27 Aug 2010 15:34:13 +0900
+
+app-core (1.1-8) unstable; urgency=low
+
+  * use dlog
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-8
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Mon, 23 Aug 2010 14:05:29 +0900
+
+app-core (1.1-7) unstable; urgency=low
+
+  * increase version for upload
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-7
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Fri, 20 Aug 2010 20:28:06 +0900
+
+app-core (1.1-6) unstable; urgency=low
+
+  * add measure time example to the header file and template code
+  * change Raise window API: XRaiseWindow() -> XMapRaised() for raising hided
+    window
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-6
+
+ -- Suchang Woo <suchang.woo@samsung.com>  Fri, 20 Aug 2010 14:13:19 +0900
+
+app-core (1.1-5) unstable; urgency=low
+
+  * print error messages
+  * set START TIME to environment variable
+  * bug fix - if appcore_i18n_set failed, i18n_init did not work 
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-5
+
+ -- Wonguk Jeong <wonguk.jeong@samsung.com>  Fri, 20 Aug 2010 11:01:11 +0900
+
+app-core (1.1-4) unstable; urgency=low
+
+  * gtk template has been updated
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-4
+
+ -- Wonguk Jeong <wonguk.jeong@samsung.com>  Thu, 19 Aug 2010 09:18:43 +0900
+
+app-core (1.1-3) unstable; urgency=low
+
+  * bug fix - appcore_i18n_set did not work
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-3
+
+ -- Wonguk Jeong <wonguk.jeong@samsung.com>  Mon, 16 Aug 2010 13:09:49 +0900
+
+app-core (1.1-2) unstable; urgency=low
+
+  * app history update routine added
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-2
+
+ -- Wonguk Jeong <wonguk.jeong@samsung.com>  Tue, 10 Aug 2010 11:07:54 +0900
+
+app-core (1.1-1) unstable; urgency=low
+
+  * Bug fixed - PAUSE/RESUME state handling
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-1
+
+ -- Wonguk Jeong <wonguk.jeong@samsung.com>  Fri, 06 Aug 2010 20:49:03 +0900
+
+app-core (1.1-0) unstable; urgency=low
+
+  * Re-design: change API, implementation, etc...
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.1-0
+
+ -- Wonguk Jeong <wonguk.jeong@samsung.com>  Sat, 31 Jul 2010 11:22:38 +0900
+
+app-core (1.0-19) unstable; urgency=low
+
+  * Modify header file
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.0-19
+
+ -- Sangjung Woo <sangjung.woo@samsung.com>  Fri, 16 Jul 2010 14:04:14 +0900
+
+app-core (1.0-18) unstable; urgency=low
+
+  * Modify header file for documentation
+  * Git: 165.213.180.234:/git/slp/pkgs/app-core
+  * Tag: app-core_1.0-18
+
+ -- Sangjung Woo <sangjung.woo@samsung.com>  Fri, 16 Jul 2010 10:04:14 +0900
+
+app-core (1.0-17) unstable; urgency=low
+
+  * Change maintainers
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-17
+
+ -- Youmin Ha <youmin.ha@samsung.com>  Thu, 08 Jul 2010 16:04:14 +0900
+
+app-core (1.0-16) unstable; urgency=low
+
+  * remove dlog-module-name.h and dlog.h
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-16
+
+ -- Hojun lee <rcn95@samsung.com>  Mon, 14 Jun 2010 21:32:33 -0700
+
+app-core (1.0-15) unstable; urgency=low
+
+  * bug fix that APPCORE_EVENT_TERMINATE happpens twice
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-15
+
+ -- Hojun lee <rcn95@samsung.com>  Fri, 11 Jun 2010 20:11:27 +0900
+
+app-core (1.0-14) unstable; urgency=low
+
+  * Remove utilx_raise_window and utilx dependancy
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-14
+
+ -- Sangjung Woo <sangjung.woo@samsung.com>  Fri, 11 Jun 2010 10:07:10 +0900
+
+app-core (1.0-13) unstable; urgency=low
+
+  * Remove utilx_raise_window and utilx dependancy
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-13
+
+ -- Hojun lee <rcn95@samsung.com>  Thu, 10 Jun 2010 20:07:10 +0900
+
+app-core (1.0-12) unstable; urgency=low
+
+  * bug fix for heynoti_get_pnoti_name and snoti_name API
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-12
+
+ -- Hojun lee <rcn95@samsung.com>  Wed, 09 Jun 2010 03:38:22 -0700
+
+app-core (1.0-11) unstable; urgency=low
+
+  * Remove  return_result aul
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-11
+
+ -- Hojun lee <rcn95@samsung.com>  Mon, 07 Jun 2010 05:15:25 -0700
+
+app-core (1.0-10) unstable; urgency=low
+
+  * Remove free(t->name) for fixing bugs
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-10
+
+ -- Hojun lee <rcn95@samsung.com>  Sat, 05 Jun 2010 15:17:44 +0000
+
+app-core (1.0-9) unstable; urgency=low
+
+  * add XB-Generate-Docs flag to control file
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-9
+
+ -- Hojun lee <rcn95@samsung.com>  Fri, 04 Jun 2010 21:31:49 -0700
+
+app-core (1.0-8) unstable; urgency=low
+
+  * modify pc file
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-8
+
+ -- Hojun lee <rcn95@samsung.com>  Fri, 04 Jun 2010 11:29:23 +0900
+
+app-core (1.0-7) unstable; urgency=low
+
+  * change for appcore-rotation.c (replace by New sensor APIs)
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-7
+
+ -- Yongsul Oh <yongsul96.oh@samsung.com>  Thu, 03 Jun 2010 14:50:56 +0900
+
+app-core (1.0-6) unstable; urgency=low
+
+  * update xxx_snoti_name() and xxxx_snoti_name()
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-6
+
+ -- Hojun Lee  <rcn95@samsung.com>  Mon, 31 May 2010 21:00:25 -0700
+
+app-core (1.0-5) unstable; urgency=low
+
+  * add new APPCORE_EVENT_RESULT_FOR_LAUNCH_SERVICE interface
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-5
+
+ -- Hojun Lee  <rcn95@samsung.com>  Mon, 31 May 2010 07:24:03 -0700
+
+app-core (1.0-4) unstable; urgency=low
+
+  * modify sensor rotation data type and enum value(rotmode_t->appcore_rotmode_t)
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-4
+
+ -- Hojun Lee  <rcn95@samsung.com>  Tue, 25 May 2010 03:37:06 -0700
+
+app-core (1.0-3) unstable; urgency=low
+
+  * modify control file
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-3
+
+ -- Hojun Lee  <rcn95@samsung.com>  Mon, 24 May 2010 19:13:45 +0900
+
+app-core (1.0-2) unstable; urgency=low
+
+  * modify doxygen and change lowmemory and lowbattery event
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-2
+
+ -- Hojun Lee  <rcn95@samsung.com>  Wed, 19 May 2010 18:30:23 -0700
+
+app-core (1.0-1) unstable; urgency=low
+
+  * Initial Release.
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/app-core-0
+  * Tag: app-core_1.0-1
+
+ -- Hojun Lee  <rcn95@samsung.com>  Tue, 18 May 2010 07:13:19 -0700

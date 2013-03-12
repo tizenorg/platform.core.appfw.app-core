@@ -1,0 +1,13 @@
+# Package Information for pkg-config
+
+prefix=@PREFIX@
+exec_prefix=@EXEC_PREFIX@
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@
+
+Name: app-core-common
+Description: SAMSUNG Linux platform application library
+Version: @VERSION@
+Requires: sensor vconf aul dlog x11
+Libs: -L${libdir} -lappcore-common
+Cflags: -I${includedir} -I${includedir}/appcore
