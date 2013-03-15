@@ -169,6 +169,14 @@ extern int x_raise_win(pid_t pid);
 int appcore_pause_rotation_cb(void);
 int appcore_resume_rotation_cb(void);
 
+struct ui_wm_rotate {
+   int (*set_rotation_cb) (int (*cb) (enum appcore_rm, void *), void *data);
+   int (*unset_rotation_cb) (void);
+   int (*get_rotation_state) (enum appcore_rm *curr);
+   int (*pause_rotation_cb) (void);
+   int (*resume_rotation_cb) (void);
+};
+int appcore_set_wm_rotation(struct ui_wm_rotate* wm_rotate);
 
 #define ENV_START "APP_START_TIME"
 
