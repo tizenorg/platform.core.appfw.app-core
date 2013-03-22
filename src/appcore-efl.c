@@ -19,7 +19,12 @@
  *
  */
 
-
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -32,11 +37,32 @@
 #include <Elementary.h>
 #include <glib-object.h>
 #include <malloc.h>
-#include <sysman.h>
 #include <glib.h>
 #include <stdbool.h>
 #include "appcore-internal.h"
 #include "appcore-efl.h"
+
+#define SYSMAN_MAXSTR 100
+#define SYSMAN_MAXARG 16
+#define SYSNOTI_SOCKET_PATH "/tmp/sn"
+#define RETRY_READ_COUNT	10
+
+#define PREDEF_BACKGRD				"backgrd"
+#define PREDEF_FOREGRD				"foregrd"
+
+enum sysnoti_cmd {
+	ADD_SYSMAN_ACTION,
+	CALL_SYSMAN_ACTION
+};
+
+struct sysnoti {
+	int pid;
+	int cmd;
+	char *type;
+	char *path;
+	int argc;
+	char *argv[SYSMAN_MAXARG];
+};
 
 static pid_t _pid;
 
@@ -92,6 +118,143 @@ struct win_node {
 };
 
 static struct ui_wm_rotate wm_rotate;
+
+
+static inline int send_str(int fd, char *str)
+{
+	int len;
+	int ret;
+	if (str == NULL) {
+		len = 0;
+		ret = write(fd, &len, sizeof(int));
+	} else {
+		len = strlen(str);
+		if (len > SYSMAN_MAXSTR)
+			len = SYSMAN_MAXSTR;
+		write(fd, &len, sizeof(int));
+		ret = write(fd, str, len);
+	}
+	return ret;
+}
+
+static int sysnoti_send(struct sysnoti *msg)
+{
+	_ERR("--- %s: start", __FUNCTION__);
+	int client_len;
+	int client_sockfd;
+	int result;
+	int r;
+	int retry_count = 0;
+	struct sockaddr_un clientaddr;
+	int i;
+
+	client_sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (client_sockfd == -1) {
+		_ERR("%s: socket create failed\n", __FUNCTION__);
+		return -1;
+	}
+	bzero(&clientaddr, sizeof(clientaddr));
+	clientaddr.sun_family = AF_UNIX;
+	strncpy(clientaddr.sun_path, SYSNOTI_SOCKET_PATH, sizeof(clientaddr.sun_path) - 1);
+	client_len = sizeof(clientaddr);
+
+	if (connect(client_sockfd, (struct sockaddr *)&clientaddr, client_len) <
+	    0) {
+		_ERR("%s: connect failed\n", __FUNCTION__);
+		close(client_sockfd);
+		return -1;
+	}
+
+	send_int(client_sockfd, msg->pid);
+	send_int(client_sockfd, msg->cmd);
+	send_str(client_sockfd, msg->type);
+	send_str(client_sockfd, msg->path);
+	send_int(client_sockfd, msg->argc);
+	for (i = 0; i < msg->argc; i++)
+		send_str(client_sockfd, msg->argv[i]);
+
+	_ERR("--- %s: read", __FUNCTION__);
+	while (retry_count < RETRY_READ_COUNT) {
+		r = read(client_sockfd, &result, sizeof(int));
+		if (r < 0) {
+			if (errno == EINTR) {
+				_ERR("Re-read for error(EINTR)");
+				retry_count++;
+				continue;
+			}
+			_ERR("Read fail for str length");
+			result = -1;
+			break;
+
+		}
+		break;
+	}
+	if (retry_count == RETRY_READ_COUNT) {
+		_ERR("Read retry failed");
+	}
+
+	close(client_sockfd);
+	_ERR("--- %s: end", __FUNCTION__);
+	return result;
+}
+
+static int _call_predef_action(const char *type, int num, ...)
+{
+	_ERR("--- %s: start", __FUNCTION__);
+	struct sysnoti *msg;
+	int ret;
+	va_list argptr;
+
+	int i;
+	char *args = NULL;
+
+	if (type == NULL || num > SYSMAN_MAXARG) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	msg = malloc(sizeof(struct sysnoti));
+
+	if (msg == NULL) {
+		/* Do something for not enought memory error */
+		return -1;
+	}
+
+	msg->pid = getpid();
+	msg->cmd = CALL_SYSMAN_ACTION;
+	msg->type = (char *)type;
+	msg->path = NULL;
+
+	msg->argc = num;
+	va_start(argptr, num);
+	for (i = 0; i < num; i++) {
+		args = va_arg(argptr, char *);
+		msg->argv[i] = args;
+	}
+	va_end(argptr);
+
+	_ERR("--- %s: send msg", __FUNCTION__);
+	ret = sysnoti_send(msg);
+	free(msg);
+
+	_ERR("--- %s: end", __FUNCTION__);
+	return ret;
+}
+
+static int _inform_foregrd(void)
+{
+	char buf[255];
+	snprintf(buf, sizeof(buf), "%d", getpid());
+	return _call_predef_action(PREDEF_FOREGRD, 1, buf);
+}
+
+static int _inform_backgrd(void)
+{
+	char buf[255];
+	snprintf(buf, sizeof(buf), "%d", getpid());
+	return _call_predef_action(PREDEF_BACKGRD, 1, buf);
+}
+
 
 static int WIN_COMP(gconstpointer data1, gconstpointer data2)
 {
@@ -210,7 +373,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		/* TODO : rotation stop */
 		//r = appcore_pause_rotation_cb();
 
-		sysman_inform_backgrd();
+		_inform_backgrd();
 		break;
 	case AE_RESUME:
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:start]",
@@ -227,7 +390,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		    ui->name);
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:Launching:done]",
 		    ui->name);
-		sysman_inform_foregrd();
+		_inform_foregrd();
 
 		break;
 	default:

@@ -12,14 +12,12 @@ BuildRequires:  pkgconfig(aul)
 BuildRequires:  pkgconfig(rua)
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(x11)
-BuildRequires:  pkgconfig(sysman)
 BuildRequires:  pkgconfig(elementary)
 BuildRequires:  pkgconfig(ecore)
 BuildRequires:  pkgconfig(ecore-x)
 BuildRequires:  pkgconfig(gobject-2.0)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  cmake
-BuildRequires:  sysman-devel
 
 
 %description
