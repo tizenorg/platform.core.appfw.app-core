@@ -59,7 +59,7 @@ SET(SRCS_efl src/appcore-efl.c)
 SET(HEADERS_efl appcore-efl.h)
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkg_efl REQUIRED elementary dlog sysman ecore ecore-x gobject-2.0 glib-2.0)
+pkg_check_modules(pkg_efl REQUIRED elementary dlog ecore ecore-x gobject-2.0 glib-2.0)
 FOREACH(flag ${pkg_efl_CFLAGS})
 	SET(EXTRA_CFLAGS_efl "${EXTRA_CFLAGS_efl} ${flag}")
 ENDFOREACH(flag)
