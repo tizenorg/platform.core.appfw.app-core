@@ -119,6 +119,10 @@ struct win_node {
 
 static struct ui_wm_rotate wm_rotate;
 
+static inline int send_int(int fd, int val)
+{
+	return write(fd, &val, sizeof(int));
+}
 
 static inline int send_str(int fd, char *str)
 {
