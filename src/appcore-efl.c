@@ -39,6 +39,7 @@
 #include <malloc.h>
 #include <glib.h>
 #include <stdbool.h>
+#include <aul.h>
 #include "appcore-internal.h"
 #include "appcore-efl.h"
 
@@ -940,6 +941,8 @@ EXPORT_API int appcore_efl_main(const char *name, int *argc, char ***argv,
 	}
 
 	elm_run();
+
+	aul_status_update(STATUS_DYING);
 
 	__after_loop(&priv);
 
