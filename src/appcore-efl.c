@@ -536,6 +536,9 @@ static Ecore_X_Atom _WM_WINDOW_ROTATION_CHANGE_REQUEST = 0;
 
 static int __check_wm_rotation_support(void)
 {
+	_DBG("Disable window manager rotation");
+	return -1;
+
 	Ecore_X_Window root, win, win2;
 	int ret;
 
