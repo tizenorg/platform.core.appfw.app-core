@@ -68,6 +68,8 @@ struct sysnoti {
 static pid_t _pid;
 
 static bool resource_reclaiming = TRUE;
+static int tmp_val = 0;
+
 
 struct ui_priv {
 	const char *name;
@@ -383,11 +385,12 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	case AE_RESUME:
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:start]",
 		    ui->name);
-		if (ui->state == AS_PAUSED) {
+		if (ui->state == AS_PAUSED || tmp_val == 1) {
 			_DBG("[APP %d] RESUME", _pid);
 			if (ui->ops->resume)
 				r = ui->ops->resume(ui->ops->data);
 			ui->state = AS_RUNNING;
+			 tmp_val = 0;
 		}
 		/*TODO : rotation start*/
 		//r = appcore_resume_rotation_cb();
@@ -964,6 +967,8 @@ EXPORT_API int appcore_set_system_resource_reclaiming(bool enable)
 EXPORT_API int appcore_set_app_state(int state)
 {
 	priv.state = state;
+
+	tmp_val = 1;
 
 	return 0;
 }
