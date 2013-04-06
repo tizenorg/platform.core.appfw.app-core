@@ -960,3 +960,10 @@ EXPORT_API int appcore_set_system_resource_reclaiming(bool enable)
 
 	return 0;
 }
+
+EXPORT_API int appcore_set_app_state(int state)
+{
+	priv.state = state;
+
+	return 0;
+}
