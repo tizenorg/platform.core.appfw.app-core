@@ -224,7 +224,10 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (enum appcore_rm, void *),
 		r = sf_start(handle, 0);
 		if (r < 0) {
 			_ERR("sf_start failed: %d", r);
-			sf_unregister_event(handle, ACCELEROMETER_EVENT_ROTATION_CHECK);
+			r = sf_unregister_event(handle, ACCELEROMETER_EVENT_ROTATION_CHECK);
+			if (r < 0) {
+				_ERR("sf_unregister_event failed: %d", r);
+			}
 			rot.callback = NULL;
 			rot.cbdata = NULL;
 			rot.cb_set = 0;

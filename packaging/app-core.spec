@@ -1,7 +1,7 @@
 Name:       app-core
 Summary:    Application basic
 Version:    1.2
-Release:    45
+Release:    46
 Group:      Application Framework
 License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
