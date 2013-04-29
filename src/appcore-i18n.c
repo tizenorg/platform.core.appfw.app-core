@@ -52,6 +52,7 @@ void update_lang(void)
 void update_region(void)
 {
 	char *region;
+	char *r;
 
 	region = vconf_get_str(VCONFKEY_REGIONFORMAT);
 	if (region) {
@@ -66,6 +67,10 @@ void update_region(void)
 		setenv("LC_TELEPHONE", region, 1);
 		setenv("LC_MEASUREMENT", region, 1);
 		setenv("LC_IDENTIFICATION", region, 1);
+		r = setlocale(LC_ALL, "");
+		if (r == NULL) {
+			_DBG("*****appcore setlocale=%s\n", r);
+		}
 		free(region);
 	}
 }
