@@ -2,7 +2,7 @@
 
 prefix=@PREFIX@
 exec_prefix=@EXEC_PREFIX@
-libdir=@LIBDIR@
+libdir=@LIB_INSTALL_DIR@
 includedir=@INCLUDEDIR@
 
 Name: app-core-common
