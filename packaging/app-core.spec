@@ -84,8 +84,8 @@ make %{?jobs:-j%jobs}
 %install
 rm -rf %{buildroot}
 %make_install
-install -d %{buildroot}%{_prefix}/lib/systemd/user/core-efl.target.wants
-install -m0644 %{SOURCE101} %{buildroot}%{_prefix}/lib/systemd/user/
+install -d %{buildroot}%{_unitdir_user}/core-efl.target.wants
+install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}
 
 
 %post efl -p /sbin/ldconfig
@@ -115,8 +115,8 @@ install -m0644 %{SOURCE101} %{buildroot}%{_prefix}/lib/systemd/user/
 %manifest app-core.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so.*
-%{_prefix}/lib/systemd/user/core-efl.target
-%{_prefix}/lib/systemd/user/core-efl.target.wants/
+%{_unitdir_user}/core-efl.target
+%{_unitdir_user}/core-efl.target.wants/
 
 %files common-devel
 %defattr(-,root,root,-)
