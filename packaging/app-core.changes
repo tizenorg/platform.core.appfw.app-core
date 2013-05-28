@@ -1,0 +1,37 @@
+* Tue May 28 2013 Xavier Roche <xavrock.os@gmail.com> accepted/tizen/20130520.100903@8c0d950
+- Fix X86_64 build-install compliance
+- fixed region change bug
+- fixed prevent issue
+- fixed a bug
+- Merge branch 'master' into tizen_2.1
+- added new API
+- Disable window manager rotation
+- added status update
+- fixed build error
+- Merge branch 'master' into tizen_2.1
+- remove sysman dependency
+- merge with master
+- Tizen 2.1 base
+- changed rotation code
+- fixed build on x86_64 and clean up CFLAGS
+- fixed rotation bug
+- fixed prevent issues
+- modified dlog tag
+- 1. remove error handle for setlocale 2. support hw acceleration
+- updated spec file(apply systemd)
+- Merge branch 'for-rsa-systemd'
+- fixed rotation bug
+- Merge branch 'master' into systemd
+- Removed systemd modification
+- 1. add smack manifest 2. add system target 3. Applied systemd change
+- add system target
+- tizen 2.0 build
+- tizen build
+- tizen 2.0 build
+- Upload Tizen2.0 source
+- upload tizen1.0 source
+- update for beta universally
+- merged with private
+- Git init
+- Initial empty repository
+
