@@ -1,0 +1,8 @@
+Change-Id: I8c0d950d6d405834e1a0c6b388dfe10f21d856c7
+Code-Review+2: Anas Nashif
+Verified+1: Xavier Roche <xavier.roche@eurogiciel.fr>
+Submitted-by: Xavier Roche <xavier.roche@eurogiciel.fr>
+Submitted-at: Fri, 31 May 2013 00:15:15 -0700
+Reviewed-on: https://review.tizen.org/gerrit/3694
+Project: platform/core/appfw/app-core
+Branch: refs/heads/tizen
