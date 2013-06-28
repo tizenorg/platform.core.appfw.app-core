@@ -6,6 +6,7 @@ Group:      Application Framework
 License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
 Source101:  packaging/core-efl.target
+Source1001: 	app-core.manifest
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(aul)
@@ -74,6 +75,7 @@ Application basics template
 
 %prep
 %setup -q 
+cp %{SOURCE1001} .
 
 %build
 %cmake . -DENABLE_GTK=OFF
@@ -101,24 +103,26 @@ install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}
 
 
 %files efl
-%manifest app-core.manifest
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-efl.so.*
 
 %files efl-devel
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_includedir}/appcore/appcore-efl.h
 %{_libdir}/libappcore-efl.so
 %{_libdir}/pkgconfig/appcore-efl.pc
 
 %files common
-%manifest app-core.manifest
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so.*
 %{_unitdir_user}/core-efl.target
 %{_unitdir_user}/core-efl.target.wants/
 
 %files common-devel
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so
 %{_libdir}/pkgconfig/appcore-common.pc
