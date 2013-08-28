@@ -1,3 +1,0 @@
-@PREFIX@/include/appcore/appcore-common.h
-@PREFIX@/lib/pkgconfig/appcore-common.pc
-@PREFIX@/include/SLP_Appcore_PG.h
