@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 install -d %{buildroot}%{_prefix}/lib/systemd/user/core-efl.target.wants
 install -m0644 %{SOURCE101} %{buildroot}%{_prefix}/lib/systemd/user/
 
+mkdir -p %{buildroot}/usr/share/license
+cp LICENSE %{buildroot}/usr/share/license/%{name}
+
 
 %post efl -p /sbin/ldconfig
 
@@ -117,6 +120,7 @@ install -m0644 %{SOURCE101} %{buildroot}%{_prefix}/lib/systemd/user/
 %{_libdir}/libappcore-common.so.*
 %{_prefix}/lib/systemd/user/core-efl.target
 %{_prefix}/lib/systemd/user/core-efl.target.wants/
+/usr/share/license/%{name}
 
 %files common-devel
 %defattr(-,root,root,-)
