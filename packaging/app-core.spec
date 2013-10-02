@@ -1,7 +1,7 @@
 Name:       app-core
 Summary:    Application basic
 Version:    1.2
-Release:    47
+Release:    48
 Group:      Application Framework
 License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
@@ -89,6 +89,9 @@ rm -rf %{buildroot}
 install -d %{buildroot}%{_unitdir_user}/core-efl.target.wants
 install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}
 
+mkdir -p %{buildroot}/usr/share/license
+cp LICENSE %{buildroot}/usr/share/license/%{name}
+
 
 %post efl -p /sbin/ldconfig
 
@@ -118,8 +121,9 @@ install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so.*
-%{_unitdir_user}/core-efl.target
-%{_unitdir_user}/core-efl.target.wants/
+%{_prefix}/lib/systemd/user/core-efl.target
+%{_prefix}/lib/systemd/user/core-efl.target.wants/
+/usr/share/license/%{name}
 
 %files common-devel
 %manifest %{name}.manifest

@@ -1,3 +1,0 @@
-@PREFIX@/bin/app-gen.sh
-@PREFIX@/bin/app3D-gen.sh
-@PREFIX@/share/app-template/*

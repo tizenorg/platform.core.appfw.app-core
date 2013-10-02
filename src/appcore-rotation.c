@@ -359,7 +359,7 @@ EXPORT_API int appcore_resume_rotation_cb(void)
 		return rot.wm_rotate->resume_rotation_cb();
 	}
 	else {
-		int r;
+		int r,ret;
 		enum appcore_rm m;
 
 		_retv_if(rot.callback == NULL, 0);
@@ -381,8 +381,10 @@ EXPORT_API int appcore_resume_rotation_cb(void)
 			if (r < 0) {
 				_ERR("sf_start in appcore_internal_sf_start failed: %d",
 				     r);
-				sf_unregister_event(rot.handle,
+				ret = sf_unregister_event(rot.handle,
 						    ACCELEROMETER_EVENT_ROTATION_CHECK);
+				if (ret < 0)
+					_ERR("sf_unregister_event failed: %d", ret);
 				rot.cb_set = 0;
 				return -1;
 			}
