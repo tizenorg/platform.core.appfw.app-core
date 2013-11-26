@@ -1,3 +1,5 @@
+%bcond_with wayland
+
 Name:       app-core
 Summary:    Application basic
 Version:    1.2
@@ -5,7 +7,11 @@ Release:    48
 Group:      Application Framework
 License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
-Source101:  packaging/core-efl.target
+%if %{with wayland}
+Source101:  packaging/core-efl-wayland.target
+%else
+Source101:  packaging/core-efl-x.target
+%endif
 Source1001: 	app-core.manifest
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(vconf)
@@ -87,7 +93,7 @@ make %{?jobs:-j%jobs}
 rm -rf %{buildroot}
 %make_install
 install -d %{buildroot}%{_unitdir_user}/core-efl.target.wants
-install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}
+install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}/core-efl.target
 
 mkdir -p %{buildroot}/usr/share/license
 cp LICENSE %{buildroot}/usr/share/license/%{name}
