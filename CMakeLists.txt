@@ -8,6 +8,12 @@ SET(INCLUDEDIR "\${prefix}/include")
 SET(VERSION_MAJOR 1)
 SET(VERSION "${VERSION_MAJOR}.1")
 
+IF ( ENABLE_WAYLAND )
+	SET(BUILD_FOR_WAYLAND 1)
+ELSE ()
+        SET(BUILD_FOR_WAYLAND 0)
+ENDIF ()
+
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 
 ADD_DEFINITIONS("-DPREFIX=\"${PREFIX}\"")
@@ -23,19 +29,36 @@ SET(CMAKE_SKIP_BUILD_RPATH TRUE)
 # Build appcore-common Library
 # ------------------------------
 SET(APPCORE_COMMON "appcore-common")
-SET(SRCS_common src/appcore.c src/appcore-i18n.c src/appcore-measure.c
-#		src/appcore-noti.c src/appcore-pmcontrol.c 
-		src/appcore-rotation.c
-#		src/appcore-util.c
-		src/appcore-X.c)
+
+IF ( ENABLE_WAYLAND )
+       SET(SRCS_common src/appcore.c src/appcore-i18n.c src/appcore-measure.c
+       #               src/appcore-noti.c src/appcore-pmcontrol.c
+                       src/appcore-rotation.c
+       #               src/appcore-util.c
+                       src/appcore-Wayland.c)
+ELSE ()
+       SET(SRCS_common src/appcore.c src/appcore-i18n.c src/appcore-measure.c
+       #               src/appcore-noti.c src/appcore-pmcontrol.c
+                       src/appcore-rotation.c
+       #               src/appcore-util.c
+                       src/appcore-X.c)
+ENDIF ()
+
 SET(HEADERS_common appcore-common.h)
 
 INCLUDE(FindPkgConfig)
-#pkg_check_modules(pkg_common REQUIRED pmapi vconf sensor aul rua dlog x11)
-pkg_check_modules(pkg_common REQUIRED vconf sensor aul dlog x11 ecore-x)
+IF ( ENABLE_WAYLAND )
+       pkg_check_modules(pkg_common REQUIRED vconf sensor aul dlog ecore)
+ELSE ()
+       pkg_check_modules(pkg_common REQUIRED vconf sensor aul dlog x11 ecore-x)
+ENDIF ()
+
 FOREACH(flag ${pkg_common_CFLAGS})
 	SET(EXTRA_CFLAGS_common "${EXTRA_CFLAGS_common} ${flag}")
 ENDFOREACH(flag)
+
+SET(APPCORE_CONFIG "appcore-config")
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/include/${APPCORE_CONFIG}.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/${APPCORE_CONFIG}.h @ONLY)
 
 ADD_LIBRARY(${APPCORE_COMMON} SHARED ${SRCS_common})
 SET_TARGET_PROPERTIES(${APPCORE_COMMON} PROPERTIES SOVERSION ${VERSION_MAJOR})
@@ -60,7 +83,13 @@ SET(SRCS_efl src/appcore-efl.c)
 SET(HEADERS_efl appcore-efl.h)
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkg_efl REQUIRED elementary dlog ecore ecore-x gobject-2.0 glib-2.0 aul)
+
+IF ( ENABLE_WAYLAND )
+        pkg_check_modules(pkg_efl REQUIRED elementary dlog ecore gobject-2.0 glib-2.0 aul)
+ELSE ()
+        pkg_check_modules(pkg_efl REQUIRED elementary dlog ecore ecore-x gobject-2.0 glib-2.0 aul)
+ENDIF ()
+
 FOREACH(flag ${pkg_efl_CFLAGS})
 	SET(EXTRA_CFLAGS_efl "${EXTRA_CFLAGS_efl} ${flag}")
 ENDFOREACH(flag)
