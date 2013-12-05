@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <dlog.h>
 #include "appcore-common.h"
-
+#include "appcore-config.h"
 
 #ifndef EXPORT_API
 #  define EXPORT_API __attribute__ ((visibility("default")))
