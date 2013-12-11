@@ -26,12 +26,16 @@
 
 #include <sensor.h>
 #include <vconf.h>
-#include <Ecore_X.h>
 #include <Ecore.h>
-#include <X11/Xlib.h>
-
 #include "appcore-internal.h"
 
+#ifndef WAYLAND_PLATFORM
+#include <Ecore_X.h>
+#include <X11/Xlib.h>
+#endif
+
+#ifndef WAYLAND_PLATFORM
+/*Fixme: to be added for wayland works*/
 #define _MAKE_ATOM(a, s)                              \
    do {                                               \
         a = ecore_x_atom_get(s);                      \
@@ -43,6 +47,7 @@
 
 static Ecore_X_Atom ATOM_ROTATION_LOCK = 0;
 static Ecore_X_Window root;
+#endif
 
 struct rot_s {
 	int handle;
@@ -240,9 +245,11 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (enum appcore_rm, void *),
 		rot.handle = handle;
 		__add_rotlock(data);
 
+#ifndef WAYLAND_PLATFORM
 		_MAKE_ATOM(ATOM_ROTATION_LOCK, STR_ATOM_ROTATION_LOCK );
 		root =  ecore_x_window_root_first_get();
 		XSelectInput(ecore_x_display_get(), root, PropertyChangeMask);
+#endif
 	}
 	return 0;
 }
