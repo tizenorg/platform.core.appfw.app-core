@@ -30,7 +30,6 @@
 #include <dlog.h>
 #include "appcore-common.h"
 
-
 #ifndef EXPORT_API
 #  define EXPORT_API __attribute__ ((visibility("default")))
 #endif
