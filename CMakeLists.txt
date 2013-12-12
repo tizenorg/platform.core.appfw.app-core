@@ -23,16 +23,27 @@ SET(CMAKE_SKIP_BUILD_RPATH TRUE)
 # Build appcore-common Library
 # ------------------------------
 SET(APPCORE_COMMON "appcore-common")
-SET(SRCS_common src/appcore.c src/appcore-i18n.c src/appcore-measure.c
-#		src/appcore-noti.c src/appcore-pmcontrol.c 
-		src/appcore-rotation.c
-#		src/appcore-util.c
-		src/appcore-X.c)
+SET(SRCS_common src/appcore.c src/appcore-i18n.c src/appcore-measure.c src/appcore-rotation.c)
+
+OPTION(WITHOUT_X "Build without X" ON)
+IF(WITHOUT_X)
+ADD_DEFINITIONS("-DWAYLAND_PLATFORM")
+       SET(SRCS_common ${SRCS_common} src/appcore-Wayland.c)
+ELSE (WITHOUT_X)
+       SET(SRCS_common ${SRCS_common} src/appcore-X.c)
+ENDIF (WITHOUT_X)
+
 SET(HEADERS_common appcore-common.h)
 
 INCLUDE(FindPkgConfig)
-#pkg_check_modules(pkg_common REQUIRED pmapi vconf sensor aul rua dlog x11)
-pkg_check_modules(pkg_common REQUIRED vconf sensor aul dlog x11 ecore-x)
+SET(APPCORE_PKG_CHECK_MODULES "vconf sensor aul dlog")
+
+IF ( WITHOUT_X )
+       pkg_check_modules(pkg_common REQUIRED ${APPCORE_PKG_CHECK_MODULES} ecore)
+ELSE (WITHOUT_X)
+       pkg_check_modules(pkg_common REQUIRED "${APPCORE_PKG_CHECK_MODULES} x11 ecore-x")
+ENDIF (WITHOUT_X)
+
 FOREACH(flag ${pkg_common_CFLAGS})
 	SET(EXTRA_CFLAGS_common "${EXTRA_CFLAGS_common} ${flag}")
 ENDFOREACH(flag)
@@ -60,7 +71,14 @@ SET(SRCS_efl src/appcore-efl.c)
 SET(HEADERS_efl appcore-efl.h)
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkg_efl REQUIRED elementary dlog ecore ecore-x gobject-2.0 glib-2.0 aul)
+SET(APPCORE_PKG_CHECK_MODULES2 "elementary dlog ecore gobject-2.0 glib-2.0 aul")
+
+IF ( WITHOUT_X )
+        pkg_check_modules(pkg_efl REQUIRED ${APPCORE_PKG_CHECK_MODULES2})
+ELSE (WITHOUT_X)
+        pkg_check_modules(pkg_efl REQUIRED "${APPCORE_PKG_CHECK_MODULES2} ecore-x")
+ENDIF (WITHOUT_X)
+
 FOREACH(flag ${pkg_efl_CFLAGS})
 	SET(EXTRA_CFLAGS_efl "${EXTRA_CFLAGS_efl} ${flag}")
 ENDFOREACH(flag)

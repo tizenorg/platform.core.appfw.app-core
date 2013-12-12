@@ -28,9 +28,13 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifndef WAYLAND_PLATFORM
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <Ecore_X.h>
+#endif
+
 #include <Ecore.h>
 #include <Ecore_Evas.h>
 #include <Ecore_Input_Evas.h>
@@ -534,6 +538,7 @@ static bool __update_win(unsigned int win, bool bfobscured)
 }
 
 /* WM_ROTATE */
+#ifndef WAYLAND_PLATFORM
 static Ecore_X_Atom _WM_WINDOW_ROTATION_SUPPORTED = 0;
 static Ecore_X_Atom _WM_WINDOW_ROTATION_CHANGE_REQUEST = 0;
 
@@ -595,9 +600,11 @@ static void __set_wm_rotation_support(unsigned int win, unsigned int set)
 }
 
 Ecore_X_Atom atom_parent;
+#endif
 
 static Eina_Bool __show_cb(void *data, int type, void *event)
 {
+#ifndef WAYLAND_PLATFORM
 	Ecore_X_Event_Window_Show *ev;
 	int ret;
 	Ecore_X_Window parent;
@@ -622,12 +629,14 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 	}
 	else
 		__update_win((unsigned int)ev->win, FALSE);
+	#endif
 
 	return ECORE_CALLBACK_RENEW;
 }
 
 static Eina_Bool __hide_cb(void *data, int type, void *event)
 {
+#ifndef WAYLAND_PLATFORM
 	Ecore_X_Event_Window_Hide *ev;
 	int bvisibility = 0;
 
@@ -645,12 +654,14 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 			__do_app(AE_PAUSE, data, NULL);
 		}
 	}
+#endif
 
 	return ECORE_CALLBACK_RENEW;
 }
 
 static Eina_Bool __visibility_cb(void *data, int type, void *event)
 {
+#ifndef WAYLAND_PLATFORM
 	Ecore_X_Event_Window_Visibility_Change *ev;
 	int bvisibility = 0;
 
@@ -670,11 +681,13 @@ static Eina_Bool __visibility_cb(void *data, int type, void *event)
 		__do_app(AE_PAUSE, data, NULL);
 	} else
 		_DBG(" No change state \n");
+#endif
 
 	return ECORE_CALLBACK_RENEW;
 
 }
 
+#ifndef WAYLAND_PLATFORM
 /* WM_ROTATE */
 static Eina_Bool __cmsg_cb(void *data, int type, void *event)
 {
@@ -709,11 +722,12 @@ static Eina_Bool __cmsg_cb(void *data, int type, void *event)
 
 	return ECORE_CALLBACK_PASS_ON;
 }
+#endif
 
 static void __add_climsg_cb(struct ui_priv *ui)
 {
 	_ret_if(ui == NULL);
-
+#ifndef WAYLAND_PLATFORM
 	atom_parent = ecore_x_atom_get("_E_PARENT_BORDER_WINDOW");
 	if (!atom_parent)
 	{
@@ -736,6 +750,7 @@ static void __add_climsg_cb(struct ui_priv *ui)
 		ui->wm_rot_supported = 1;
 		appcore_set_wm_rotation(&wm_rotate);
 	}
+#endif
 }
 
 static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
@@ -757,11 +772,21 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 	if(hwacc == NULL) {
 		_DBG("elm_config_preferred_engine_set is not called");
 	} else if(strcmp(hwacc, "USE") == 0) {
+#ifdef WAYLAND_PLATFORM
+		elm_config_preferred_engine_set("wayland_egl");
+		_DBG("elm_config_preferred_engine_set : wayland_egl");
+#else
 		elm_config_preferred_engine_set("opengl_x11");
 		_DBG("elm_config_preferred_engine_set : opengl_x11");
+#endif
 	} else if(strcmp(hwacc, "NOT_USE") == 0) {
+#ifdef WAYLAND_PLATFORM
+		elm_config_preferred_engine_set("wayland_shm");
+		_DBG("elm_config_preferred_engine_set : wayland_shm");
+#else
 		elm_config_preferred_engine_set("software_x11");
 		_DBG("elm_config_preferred_engine_set : software_x11");
+#endif
 	} else {
 		_DBG("elm_config_preferred_engine_set is not called");
 	}

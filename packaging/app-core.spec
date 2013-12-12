@@ -1,3 +1,5 @@
+%bcond_without x
+
 Name:       app-core
 Summary:    Application basic
 Version:    1.2
@@ -7,15 +9,17 @@ License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
 Source101:  packaging/core-efl.target
 Source1001: 	app-core.manifest
+%if !%{without x}
+BuildRequires:  pkgconfig(x11)
+BuildRequires:  pkgconfig(ecore-x)
+%endif
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(aul)
 BuildRequires:  pkgconfig(rua)
 BuildRequires:  pkgconfig(dlog)
-BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(elementary)
 BuildRequires:  pkgconfig(ecore)
-BuildRequires:  pkgconfig(ecore-x)
 BuildRequires:  pkgconfig(gobject-2.0)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  cmake
@@ -79,7 +83,6 @@ cp %{SOURCE1001} .
 
 %build
 %cmake . -DENABLE_GTK=OFF
-
 
 make %{?jobs:-j%jobs}
 
