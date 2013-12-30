@@ -196,6 +196,13 @@ static int __app_reset(void *data, bundle * k)
 static int __app_resume(void *data)
 {
 	x_raise_win(getpid());
+
+	 /* this will raise the window via WRT/Webkit, and cover Wayland case */
+	struct appcore *ac = data;
+	_retv_if(ac == NULL || ac->ops == NULL, -1);
+	_retv_if(ac == NULL || ac->ops == NULL, -1);
+	ac->ops->cb_app(AE_RESUME, ac->ops->data, NULL);
+
 	return 0;
 }
 

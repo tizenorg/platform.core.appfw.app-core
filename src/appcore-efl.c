@@ -385,6 +385,15 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	case AE_RESUME:
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:start]",
 		    ui->name);
+		/* pause if it hasn't been done before */
+		if (ui->state != AS_PAUSED) {
+			_DBG("[APP %d] PAUSE", _pid);
+                       if (ui->ops->pause)
+                                r = ui->ops->pause(ui->ops->data);
+                        ui->state = AS_PAUSED;
+                        if(r >= 0 && resource_reclaiming == TRUE)
+                                __appcore_timer_add(ui);
+		}
 		if (ui->state == AS_PAUSED || tmp_val == 1) {
 			_DBG("[APP %d] RESUME", _pid);
 			if (ui->ops->resume)
