@@ -195,7 +195,17 @@ static int __app_reset(void *data, bundle * k)
 
 static int __app_resume(void *data)
 {
+#ifdef WAYLAND
+	struct appcore *ac = data;
+
+	_retv_if(ac == NULL || ac->ops == NULL, -1);
+	_retv_if(ac->ops->cb_app == NULL, 0);
+
+	ac->ops->cb_app(AE_RESUME, ac->ops->data, NULL);
+
+#else
 	x_raise_win(getpid());
+#endif
 	return 0;
 }
 
