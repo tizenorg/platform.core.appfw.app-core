@@ -23,16 +23,25 @@ SET(CMAKE_SKIP_BUILD_RPATH TRUE)
 # Build appcore-common Library
 # ------------------------------
 SET(APPCORE_COMMON "appcore-common")
-SET(SRCS_common src/appcore.c src/appcore-i18n.c src/appcore-measure.c
-#		src/appcore-noti.c src/appcore-pmcontrol.c 
-		src/appcore-rotation.c
-#		src/appcore-util.c
-		src/appcore-X.c)
+SET(SRCS_common src/appcore.c src/appcore-i18n.c src/appcore-measure.c src/appcore-rotation.c)
+
+IF (with_wayland)
+       ADD_DEFINITIONS("-DWAYLAND")
+ELSE (with_wayland)
+       SET(SRCS_common ${SRCS_common} src/appcore-X.c)
+ENDIF (with_wayland)
+
 SET(HEADERS_common appcore-common.h)
 
 INCLUDE(FindPkgConfig)
-#pkg_check_modules(pkg_common REQUIRED pmapi vconf sensor aul rua dlog x11)
-pkg_check_modules(pkg_common REQUIRED vconf sensor aul dlog x11 ecore-x)
+SET(APPCORE_PKG_CHECK_MODULES "vconf sensor aul dlog")
+
+IF (with_wayland)
+       pkg_check_modules(pkg_common REQUIRED ${APPCORE_PKG_CHECK_MODULES} ecore)
+ELSE (with_wayland)
+       pkg_check_modules(pkg_common REQUIRED "${APPCORE_PKG_CHECK_MODULES} x11 ecore-x")
+ENDIF (with_wayland)
+
 FOREACH(flag ${pkg_common_CFLAGS})
 	SET(EXTRA_CFLAGS_common "${EXTRA_CFLAGS_common} ${flag}")
 ENDFOREACH(flag)
@@ -43,7 +52,11 @@ SET_TARGET_PROPERTIES(${APPCORE_COMMON} PROPERTIES VERSION ${VERSION})
 SET_TARGET_PROPERTIES(${APPCORE_COMMON} PROPERTIES COMPILE_FLAGS ${EXTRA_CFLAGS_common})
 TARGET_LINK_LIBRARIES(${APPCORE_COMMON} ${pkg_common_LDFLAGS} "-ldl")
 
-CONFIGURE_FILE(${APPCORE_COMMON}.pc.in ${APPCORE_COMMON}.pc @ONLY)
+IF (with_wayland)
+       CONFIGURE_FILE(${APPCORE_COMMON}-wayland.pc.in ${APPCORE_COMMON}.pc @ONLY)
+ELSE (with_wayland)
+       CONFIGURE_FILE(${APPCORE_COMMON}-x.pc.in ${APPCORE_COMMON}.pc @ONLY)
+ENDIF (with_wayland)
 
 INSTALL(TARGETS ${APPCORE_COMMON} DESTINATION ${LIB_INSTALL_DIR} COMPONENT RuntimeLibraries)
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${APPCORE_COMMON}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
@@ -60,7 +73,14 @@ SET(SRCS_efl src/appcore-efl.c)
 SET(HEADERS_efl appcore-efl.h)
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkg_efl REQUIRED elementary dlog ecore ecore-x gobject-2.0 glib-2.0 aul)
+SET(APPCORE_PKG_CHECK_MODULES2 "elementary dlog ecore gobject-2.0 glib-2.0 aul")
+
+IF (with_wayland)
+        pkg_check_modules(pkg_efl REQUIRED ${APPCORE_PKG_CHECK_MODULES2})
+ELSE (with_wayland)
+        pkg_check_modules(pkg_efl REQUIRED "${APPCORE_PKG_CHECK_MODULES2} ecore-x")
+ENDIF (with_wayland)
+
 FOREACH(flag ${pkg_efl_CFLAGS})
 	SET(EXTRA_CFLAGS_efl "${EXTRA_CFLAGS_efl} ${flag}")
 ENDFOREACH(flag)

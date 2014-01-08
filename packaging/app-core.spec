@@ -1,3 +1,4 @@
+%bcond_with x
 %bcond_with wayland
 
 Name:       app-core
@@ -7,10 +8,12 @@ Release:    48
 Group:      Application Framework
 License:    Apache License, Version 2.0
 Source0:    app-core-%{version}.tar.gz
-%if %{with wayland}
+%if %{with wayland} && !%{with x}
 Source101:  packaging/core-efl-wayland.target
 %else
 Source101:  packaging/core-efl-x.target
+BuildRequires:  pkgconfig(x11)
+BuildRequires:  pkgconfig(ecore-x)
 %endif
 Source1001: 	app-core.manifest
 BuildRequires:  pkgconfig(sensor)
@@ -18,10 +21,8 @@ BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(aul)
 BuildRequires:  pkgconfig(rua)
 BuildRequires:  pkgconfig(dlog)
-BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(elementary)
 BuildRequires:  pkgconfig(ecore)
-BuildRequires:  pkgconfig(ecore-x)
 BuildRequires:  pkgconfig(gobject-2.0)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  cmake
@@ -84,8 +85,11 @@ Application basics template
 cp %{SOURCE1001} .
 
 %build
-%cmake . -DENABLE_GTK=OFF
-
+%cmake . \
+%if %{with wayland} && !%{with x}
+-Dwith_wayland=TRUE\
+%endif
+-DENABLE_GTK=OFF
 
 make %{?jobs:-j%jobs}
 
