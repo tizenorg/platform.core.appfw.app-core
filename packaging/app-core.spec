@@ -68,6 +68,10 @@ Requires:   pkgconfig(sensor)
 Requires:   pkgconfig(vconf)
 Requires:   pkgconfig(elementary)
 Requires:   pkgconfig(aul)
+%if %{with x}
+Requires:  pkgconfig(x11)
+%endif
+
 
 %description common-devel
 Application basics common (devel)
