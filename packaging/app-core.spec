@@ -6,7 +6,7 @@ Summary:    Application basic
 Version:    1.2
 Release:    48
 Group:      Application Framework
-License:    Apache License, Version 2.0
+License:    Apache-2.0
 Source0:    app-core-%{version}.tar.gz
 %if %{with wayland} && !%{with x}
 Source101:  packaging/core-efl-wayland.target
@@ -123,6 +123,7 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-efl.so.*
+/usr/share/license/%{name}
 
 %files efl-devel
 %manifest %{name}.manifest
@@ -130,6 +131,7 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %{_includedir}/appcore/appcore-efl.h
 %{_libdir}/libappcore-efl.so
 %{_libdir}/pkgconfig/appcore-efl.pc
+/usr/share/license/%{name}
 
 %files common
 %manifest %{name}.manifest
@@ -146,4 +148,5 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %{_libdir}/pkgconfig/appcore-common.pc
 %{_includedir}/appcore/appcore-common.h
 %{_includedir}/SLP_Appcore_PG.h
+/usr/share/license/%{name}
 
