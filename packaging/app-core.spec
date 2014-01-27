@@ -88,8 +88,10 @@ install -d %{buildroot}%{_prefix}/lib/systemd/user/core-efl.target.wants
 install -m0644 %{SOURCE101} %{buildroot}%{_prefix}/lib/systemd/user/
 
 mkdir -p %{buildroot}/usr/share/license
-cp LICENSE %{buildroot}/usr/share/license/%{name}
-
+cp LICENSE %{buildroot}/usr/share/license/%{name}-efl
+cp LICENSE %{buildroot}/usr/share/license/%{name}-efl-devel
+cp LICENSE %{buildroot}/usr/share/license/%{name}-common
+cp LICENSE %{buildroot}/usr/share/license/%{name}-common-devel
 
 %post efl -p /sbin/ldconfig
 
@@ -107,14 +109,14 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %manifest app-core.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-efl.so.*
-/usr/share/license/%{name}
+/usr/share/license/%{name}-efl
 
 %files efl-devel
 %defattr(-,root,root,-)
 %{_includedir}/appcore/appcore-efl.h
 %{_libdir}/libappcore-efl.so
 %{_libdir}/pkgconfig/appcore-efl.pc
-/usr/share/license/%{name}
+/usr/share/license/%{name}-efl-devel
 
 %files common
 %manifest app-core.manifest
@@ -122,7 +124,7 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %{_libdir}/libappcore-common.so.*
 %{_prefix}/lib/systemd/user/core-efl.target
 %{_prefix}/lib/systemd/user/core-efl.target.wants/
-/usr/share/license/%{name}
+/usr/share/license/%{name}-common
 
 %files common-devel
 %defattr(-,root,root,-)
@@ -130,5 +132,5 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %{_libdir}/pkgconfig/appcore-common.pc
 %{_includedir}/appcore/appcore-common.h
 %{_includedir}/SLP_Appcore_PG.h
-/usr/share/license/%{name}
+/usr/share/license/%{name}-common-devel
 
