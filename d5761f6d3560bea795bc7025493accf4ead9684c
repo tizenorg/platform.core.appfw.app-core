@@ -1,0 +1,11 @@
+Code-Review+2: Patrick McCarty <patrick.mccarty@linux.intel.com>
+Code-Review+1: ronan(Eurogiciel) Le Martret <ronan.lemartret@open.eurogiciel.org>
+Verified+1: ronan(Eurogiciel) Le Martret <ronan.lemartret@open.eurogiciel.org>
+Code-Review+1: Philippe Coval <philippe.coval@open.eurogiciel.org>
+Code-Review+2: Stéphane Desneux (sdesneux) <stephane.desneux@open.eurogiciel.org>
+Verified+1: Stéphane Desneux (sdesneux) <stephane.desneux@open.eurogiciel.org>
+Submitted-by: Stéphane Desneux (sdesneux) <stephane.desneux@open.eurogiciel.org>
+Submitted-at: Wed, 12 Feb 2014 23:36:12 -0800
+Reviewed-on: https://review.tizen.org/gerrit/14738
+Project: platform/core/appfw/app-core
+Branch: refs/heads/tizen
