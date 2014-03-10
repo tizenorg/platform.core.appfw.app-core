@@ -6,7 +6,7 @@ Summary:    Application basic
 Version:    1.2
 Release:    48
 Group:      Application Framework
-License:    Apache License, Version 2.0
+License:    Apache-2.0
 Source0:    app-core-%{version}.tar.gz
 %if %{with wayland} && !%{with x}
 Source101:  packaging/core-efl-wayland.target
@@ -104,8 +104,10 @@ install -d %{buildroot}%{_unitdir_user}/core-efl.target.wants
 install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}/core-efl.target
 
 mkdir -p %{buildroot}/usr/share/license
-cp LICENSE %{buildroot}/usr/share/license/%{name}
-
+cp LICENSE %{buildroot}/usr/share/license/%{name}-efl
+cp LICENSE %{buildroot}/usr/share/license/%{name}-efl-devel
+cp LICENSE %{buildroot}/usr/share/license/%{name}-common
+cp LICENSE %{buildroot}/usr/share/license/%{name}-common-devel
 
 %post efl -p /sbin/ldconfig
 
@@ -123,6 +125,7 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-efl.so.*
+/usr/share/license/%{name}-efl
 
 %files efl-devel
 %manifest %{name}.manifest
@@ -130,6 +133,7 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %{_includedir}/appcore/appcore-efl.h
 %{_libdir}/libappcore-efl.so
 %{_libdir}/pkgconfig/appcore-efl.pc
+/usr/share/license/%{name}-efl-devel
 
 %files common
 %manifest %{name}.manifest
@@ -137,7 +141,7 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %{_libdir}/libappcore-common.so.*
 %{_prefix}/lib/systemd/user/core-efl.target
 %{_prefix}/lib/systemd/user/core-efl.target.wants/
-/usr/share/license/%{name}
+/usr/share/license/%{name}-common
 
 %files common-devel
 %manifest %{name}.manifest
@@ -146,4 +150,5 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 %{_libdir}/pkgconfig/appcore-common.pc
 %{_includedir}/appcore/appcore-common.h
 %{_includedir}/SLP_Appcore_PG.h
+/usr/share/license/%{name}-common-devel
 
