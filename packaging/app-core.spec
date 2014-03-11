@@ -90,8 +90,8 @@ cp %{SOURCE1001} .
 
 %build
 %cmake . \
-%if %{with wayland} && !%{with x}
--Dwith_wayland=TRUE\
+%if %{with wayland}
+-Dwith_wayland=ON \
 %endif
 -DENABLE_GTK=OFF
 
