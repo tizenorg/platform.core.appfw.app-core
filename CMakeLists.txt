@@ -34,7 +34,7 @@ ENDIF (with_wayland)
 SET(HEADERS_common appcore-common.h)
 
 INCLUDE(FindPkgConfig)
-SET(APPCORE_PKG_CHECK_MODULES "vconf sensor aul dlog")
+SET(APPCORE_PKG_CHECK_MODULES "vconf sensor aul dlog libtzplatform-config")
 
 IF (with_wayland)
        pkg_check_modules(pkg_common REQUIRED ${APPCORE_PKG_CHECK_MODULES} ecore)

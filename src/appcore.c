@@ -35,13 +35,14 @@
 #include <dlfcn.h>
 #include <vconf.h>
 #include <aul.h>
+#include <tzplatform_config.h>
 #include "appcore-internal.h"
 
 #define SQLITE_FLUSH_MAX		(1024*1024)
 
 #define PKGNAME_MAX 256
-#define PATH_APP_ROOT "/opt/usr/apps"
-#define PATH_RO_APP_ROOT "/usr/apps"
+#define PATH_APP_ROOT tzplatform_getenv(TZ_USER_APP)
+#define PATH_RO_APP_ROOT tzplatform_getenv(TZ_SYS_RO_APP)
 #define PATH_RES "/res"
 #define PATH_LOCALE "/locale"
 
@@ -146,11 +147,13 @@ static int __get_dir_name(char *dirname)
 	if (aul_app_get_pkgname_bypid(pid, pkg_name, PKGNAME_MAX) != AUL_R_OK)
 		return -1;
 
-	r = snprintf(dirname, PATH_MAX, PATH_APP_ROOT "/%s" PATH_RES PATH_LOCALE,pkg_name);
+	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
+			PATH_APP_ROOT, pkg_name);
 	if (r < 0)
 		return -1;
 	if (access(dirname, R_OK) == 0) return 0;
-	r = snprintf(dirname, PATH_MAX, PATH_RO_APP_ROOT "/%s" PATH_RES PATH_LOCALE,pkg_name);
+	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
+			PATH_RO_APP_ROOT, pkg_name);
 	if (r < 0)
 		return -1;
 
