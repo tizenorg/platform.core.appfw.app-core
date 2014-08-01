@@ -29,7 +29,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifndef WAYLAND
+#ifdef WAYLAND
+#include <Ecore.h>
+#include <Ecore_Wayland.h>
+#else
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <Ecore_X.h>
@@ -125,6 +128,7 @@ struct win_node {
 };
 
 static struct ui_wm_rotate wm_rotate;
+static Eina_Bool __visibility_cb(void *data, int type, void *event);
 
 static inline int send_int(int fd, int val)
 {
@@ -604,7 +608,26 @@ Ecore_X_Atom atom_parent;
 
 static Eina_Bool __show_cb(void *data, int type, void *event)
 {
-#ifndef WAYLAND
+#ifdef WAYLAND
+	Ecore_Wl_Event_Window_Activate *ev;
+
+	ev = event;
+
+	if (ev->parent_win != 0)
+	{
+		// This is child window. Skip!!!
+		return ECORE_CALLBACK_PASS_ON;
+	}
+
+	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x\n", ev->win);
+
+	if (!__exist_win((unsigned int)ev->win))
+		__add_win((unsigned int)ev->win);
+	else
+		__update_win((unsigned int)ev->win, FALSE);
+
+    __visibility_cb(data, type, event);
+#else
 	Ecore_X_Event_Window_Show *ev;
 	int ret;
 	Ecore_X_Window parent;
@@ -636,7 +659,25 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 
 static Eina_Bool __hide_cb(void *data, int type, void *event)
 {
-#ifndef WAYLAND
+#ifdef WAYLAND
+	Ecore_Wl_Event_Window_Deactivate *ev;
+	int bvisibility = 0;
+
+	ev = event;
+
+	_DBG("[EVENT_TEST][EVENT] GET HIDE EVENT!!!. WIN:%x\n", ev->win);
+
+	if (__exist_win((unsigned int)ev->win)) {
+		__delete_win((unsigned int)ev->win);
+
+		bvisibility = __check_visible();
+		if (!bvisibility && b_active == 1) {
+			_DBG(" Go to Pasue state \n");
+			b_active = 0;
+			__do_app(AE_PAUSE, data, NULL);
+		}
+	}
+#else
 	Ecore_X_Event_Window_Hide *ev;
 	int bvisibility = 0;
 
@@ -661,13 +702,21 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 
 static Eina_Bool __visibility_cb(void *data, int type, void *event)
 {
-#ifndef WAYLAND
+#ifdef WAYLAND
+	Ecore_Wl_Event_Window_Activate *ev;
+	int bvisibility = 0;
+
+	ev = event;
+
+	__update_win((unsigned int)ev->win, ev->fobscured);
+#else
 	Ecore_X_Event_Window_Visibility_Change *ev;
 	int bvisibility = 0;
 
 	ev = event;
 
 	__update_win((unsigned int)ev->win, ev->fully_obscured);
+#endif
 	bvisibility = __check_visible();
 
 	if (bvisibility && b_active == 0) {
@@ -681,7 +730,6 @@ static Eina_Bool __visibility_cb(void *data, int type, void *event)
 		__do_app(AE_PAUSE, data, NULL);
 	} else
 		_DBG(" No change state \n");
-#endif
 
 	return ECORE_CALLBACK_RENEW;
 
@@ -727,7 +775,12 @@ static Eina_Bool __cmsg_cb(void *data, int type, void *event)
 static void __add_climsg_cb(struct ui_priv *ui)
 {
 	_ret_if(ui == NULL);
-#ifndef WAYLAND
+#ifdef WAYLAND
+	ui->hshow =
+	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_ACTIVATE, __show_cb, ui);
+	ui->hhide =
+	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_DEACTIVATE, __hide_cb, ui);
+#else
 	atom_parent = ecore_x_atom_get("_E_PARENT_BORDER_WINDOW");
 	if (!atom_parent)
 	{
