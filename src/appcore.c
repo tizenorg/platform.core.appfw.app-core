@@ -205,8 +205,8 @@ static int __app_resume(void *data)
 	_retv_if(ac->ops->cb_app == NULL, 0);
 
 	ac->ops->cb_app(AE_RESUME, ac->ops->data, NULL);
-
-#else
+#endif
+#ifdef X11
 	x_raise_win(getpid());
 #endif
 	return 0;

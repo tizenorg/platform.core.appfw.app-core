@@ -30,9 +30,10 @@
 #include <stdlib.h>
 
 #ifdef WAYLAND
-#include <Ecore.h>
 #include <Ecore_Wayland.h>
-#else
+#endif
+
+#ifdef X11
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <Ecore_X.h>
@@ -542,7 +543,7 @@ static bool __update_win(unsigned int win, bool bfobscured)
 }
 
 /* WM_ROTATE */
-#ifndef WAYLAND
+#ifdef X11
 static Ecore_X_Atom _WM_WINDOW_ROTATION_SUPPORTED = 0;
 static Ecore_X_Atom _WM_WINDOW_ROTATION_CHANGE_REQUEST = 0;
 
@@ -735,7 +736,7 @@ static Eina_Bool __visibility_cb(void *data, int type, void *event)
 
 }
 
-#ifndef WAYLAND
+#ifdef X11
 /* WM_ROTATE */
 static Eina_Bool __cmsg_cb(void *data, int type, void *event)
 {

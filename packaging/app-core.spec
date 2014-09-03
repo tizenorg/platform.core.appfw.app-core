@@ -8,10 +8,12 @@ Release:        0
 Group:          Application Framework/Libraries
 License:        Apache-2.0
 Source0:        app-core-%{version}.tar.gz
-%if %{with wayland} && !%{with x}
+%if %{with wayland}
 Source101:      packaging/core-efl-wayland.target
 %else
 Source101:      packaging/core-efl-x.target
+%endif
+%if %{with x}
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(ecore-x)
 %endif
@@ -71,7 +73,7 @@ Requires:   pkgconfig(vconf)
 Requires:   pkgconfig(elementary)
 Requires:   pkgconfig(aul)
 %if %{with x}
-Requires:  pkgconfig(x11)
+Requires:   pkgconfig(x11)
 %endif
 
 %description common-devel
@@ -94,8 +96,11 @@ cp %{SOURCE1001} .
 %build
 
 %cmake . \
-%if %{with wayland} && !%{with x}
+%if %{with wayland}
 -Dwith_wayland=TRUE\
+%endif
+%if %{with x}
+-Dwith_x11=TRUE\
 %endif
 -DENABLE_GTK=OFF
 

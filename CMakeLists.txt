@@ -27,20 +27,21 @@ SET(SRCS_common src/appcore.c src/appcore-i18n.c src/appcore-measure.c src/appco
 
 IF (with_wayland)
        ADD_DEFINITIONS("-DWAYLAND")
-ELSE (with_wayland)
+ENDIF (with_wayland)
+IF (with_x11)
+       ADD_DEFINITIONS("-DX11")
        SET(SRCS_common ${SRCS_common} src/appcore-X.c)
 ENDIF (with_wayland)
 
 SET(HEADERS_common appcore-common.h)
 
 INCLUDE(FindPkgConfig)
-SET(APPCORE_PKG_CHECK_MODULES "vconf sensor aul dlog libtzplatform-config")
+SET(APPCORE_PKG_CHECK_MODULES "vconf sensor aul dlog libtzplatform-config ecore")
+IF (with_x11)
+       SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} x11 ecore-x")
+ENDIF (with_x11)
 
-IF (with_wayland)
-       pkg_check_modules(pkg_common REQUIRED ${APPCORE_PKG_CHECK_MODULES} ecore)
-ELSE (with_wayland)
-       pkg_check_modules(pkg_common REQUIRED "${APPCORE_PKG_CHECK_MODULES} x11 ecore-x")
-ENDIF (with_wayland)
+pkg_check_modules(pkg_common REQUIRED ${APPCORE_PKG_CHECK_MODULES})
 
 FOREACH(flag ${pkg_common_CFLAGS})
 	SET(EXTRA_CFLAGS_common "${EXTRA_CFLAGS_common} ${flag}")
@@ -54,9 +55,10 @@ TARGET_LINK_LIBRARIES(${APPCORE_COMMON} ${pkg_common_LDFLAGS} "-ldl")
 
 IF (with_wayland)
        CONFIGURE_FILE(${APPCORE_COMMON}-wayland.pc.in ${APPCORE_COMMON}.pc @ONLY)
-ELSE (with_wayland)
-       CONFIGURE_FILE(${APPCORE_COMMON}-x.pc.in ${APPCORE_COMMON}.pc @ONLY)
 ENDIF (with_wayland)
+IF (with_x11)
+       CONFIGURE_FILE(${APPCORE_COMMON}-x.pc.in ${APPCORE_COMMON}.pc @ONLY)
+ENDIF (with_x11)
 
 INSTALL(TARGETS ${APPCORE_COMMON} DESTINATION ${LIB_INSTALL_DIR} COMPONENT RuntimeLibraries)
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${APPCORE_COMMON}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
@@ -74,12 +76,11 @@ SET(HEADERS_efl appcore-efl.h)
 
 INCLUDE(FindPkgConfig)
 SET(APPCORE_PKG_CHECK_MODULES2 "elementary dlog ecore gobject-2.0 glib-2.0 aul")
+IF (with_x11)
+        SET(APPCORE_PKG_CHECK_MODULES2 "${APPCORE_PKG_CHECK_MODULES2} ecore-x")
+ENDIF (with_x11)
 
-IF (with_wayland)
-        pkg_check_modules(pkg_efl REQUIRED ${APPCORE_PKG_CHECK_MODULES2})
-ELSE (with_wayland)
-        pkg_check_modules(pkg_efl REQUIRED "${APPCORE_PKG_CHECK_MODULES2} ecore-x")
-ENDIF (with_wayland)
+pkg_check_modules(pkg_efl REQUIRED ${APPCORE_PKG_CHECK_MODULES2})
 
 FOREACH(flag ${pkg_efl_CFLAGS})
 	SET(EXTRA_CFLAGS_efl "${EXTRA_CFLAGS_efl} ${flag}")

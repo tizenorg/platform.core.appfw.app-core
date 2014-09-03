@@ -29,12 +29,10 @@
 #include <Ecore.h>
 #include "appcore-internal.h"
 
-#ifndef WAYLAND
+#ifdef X11
 #include <Ecore_X.h>
 #include <X11/Xlib.h>
-#endif
 
-#ifndef WAYLAND
 /*Fixme: to be added for wayland works*/
 #define _MAKE_ATOM(a, s)                              \
    do {                                               \
@@ -245,7 +243,7 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (enum appcore_rm, void *),
 		rot.handle = handle;
 		__add_rotlock(data);
 
-#ifndef WAYLAND
+#ifdef X11
 		_MAKE_ATOM(ATOM_ROTATION_LOCK, STR_ATOM_ROTATION_LOCK );
 		root =  ecore_x_window_root_first_get();
 		XSelectInput(ecore_x_display_get(), root, PropertyChangeMask);
