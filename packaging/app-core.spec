@@ -104,7 +104,7 @@ cp %{SOURCE1001} .
 %endif
 -DENABLE_GTK=OFF
 
-make %{?jobs:-j%jobs}
+make %{?_smp_mflags}
 
 
 %install
@@ -140,8 +140,8 @@ install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}/core-efl.target
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so.*
-%{_prefix}/lib/systemd/user/core-efl.target
-%{_prefix}/lib/systemd/user/core-efl.target.wants/
+%{_unitdir_user}/core-efl.target
+%{_unitdir_user}/core-efl.target.wants/
 %license LICENSE
 
 %files common-devel
