@@ -49,7 +49,7 @@ static Ecore_X_Window root;
 
 struct rot_s {
 	int handle;
-	int (*callback) (enum appcore_rm, void *);
+	int (*callback) (void *event_info, enum appcore_rm, void *);
 	enum appcore_rm mode;
 	int lock;
 	void *cbdata;
@@ -125,7 +125,7 @@ static void __changed_cb(unsigned int event_type, sensor_event_data_t *event,
 	if (rot.callback) {
 		if (rot.cb_set && rot.mode != m) {
 			_DBG("[APP %d] Rotation: %d -> %d", getpid(), rot.mode, m);
-			rot.callback(m, data);
+			rot.callback((void *)&m, m, data);
 			rot.mode = m;
 		}
 	}
@@ -142,7 +142,7 @@ static void __lock_cb(keynode_t *node, void *data)
 	if (rot.lock) {
 		m = APPCORE_RM_PORTRAIT_NORMAL;
 		if (rot.mode != m) {
-			rot.callback(m, data);
+			rot.callback((void *)&m, m, data);
 			rot.mode = m;
 		}
 		_DBG("[APP %d] Rotation locked", getpid());
@@ -156,7 +156,7 @@ static void __lock_cb(keynode_t *node, void *data)
 			_DBG("[APP %d] Rotmode prev %d -> curr %d", getpid(),
 			     rot.mode, m);
 			if (!r && rot.mode != m) {
-				rot.callback(m, data);
+				rot.callback((void *)&m, m, data);
 				rot.mode = m;
 			}
 		}
@@ -186,7 +186,7 @@ static void __del_rotlock(void)
 	rot.lock = 0;
 }
 
-EXPORT_API int appcore_set_rotation_cb(int (*cb) (enum appcore_rm, void *),
+EXPORT_API int appcore_set_rotation_cb(int (*cb) (void *evnet_info, enum appcore_rm, void *),
 				       void *data)
 {
 	if (rot.wm_rotate) {
@@ -401,7 +401,7 @@ EXPORT_API int appcore_resume_rotation_cb(void)
 		r = appcore_get_rotation_state(&m);
 		_DBG("[APP %d] Rotmode prev %d -> curr %d", getpid(), rot.mode, m);
 		if (!r && rot.mode != m && rot.lock == 0) {
-			rot.callback(m, rot.cbdata);
+			rot.callback((void *)&m, m, rot.cbdata);
 			rot.mode = m;
 		}
 	}

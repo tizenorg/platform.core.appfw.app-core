@@ -96,7 +96,7 @@ struct ui_priv {
 	/* WM_ROTATE */
 	int wm_rot_supported;
 	int rot_started;
-	int (*rot_cb) (enum appcore_rm, void *);
+	int (*rot_cb) (void *event_info, enum appcore_rm, void *);
 	void *rot_cb_data;
 	enum appcore_rm rot_mode;
 };
@@ -765,7 +765,7 @@ static Eina_Bool __cmsg_cb(void *data, int type, void *event)
 		ui->rot_mode = rm;
 
 		if (APPCORE_RM_UNKNOWN != rm) {
-			ui->rot_cb(rm, ui->rot_cb_data);
+			ui->rot_cb((void *)&rm, rm, ui->rot_cb_data);
 		}
 	}
 
@@ -936,7 +936,7 @@ static void __unset_data(struct ui_priv *ui)
 }
 
 /* WM_ROTATE */
-static int __wm_set_rotation_cb(int (*cb) (enum appcore_rm, void *), void *data)
+static int __wm_set_rotation_cb(int (*cb) (void *event_info, enum appcore_rm, void *), void *data)
 {
 	if (cb == NULL) {
 		errno = EINVAL;

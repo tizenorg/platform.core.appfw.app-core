@@ -201,7 +201,7 @@ int add_callbacks(struct appdata *data)
  *
  */
 int appcore_set_event_callback(enum appcore_event event,
-		int (*cb)(void *), void *data);
+		int (*cb)(void *, void *), void *data);
 
 /**
  * @par Description:
@@ -255,7 +255,7 @@ static int _rot_cb(enum appcore_rm, void *);
  * @endcode
  *
  */
-int appcore_set_rotation_cb(int (*cb) (enum appcore_rm, void *),
+int appcore_set_rotation_cb(int (*cb) (void *event_info, enum appcore_rm, void *),
 			    void *data);
 
 /**

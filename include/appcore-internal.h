@@ -132,7 +132,7 @@ enum sys_event {
  * Appcore system event operation
  */
 struct sys_op {
-	int (*func) (void *);
+	int (*func) (void *, void *);
 	void *data;
 };
 
@@ -170,7 +170,7 @@ int appcore_pause_rotation_cb(void);
 int appcore_resume_rotation_cb(void);
 
 struct ui_wm_rotate {
-   int (*set_rotation_cb) (int (*cb) (enum appcore_rm, void *), void *data);
+   int (*set_rotation_cb) (int (*cb) (void *event_info, enum appcore_rm, void *), void *data);
    int (*unset_rotation_cb) (void);
    int (*get_rotation_state) (enum appcore_rm *curr);
    int (*pause_rotation_cb) (void);

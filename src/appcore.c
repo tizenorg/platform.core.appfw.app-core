@@ -229,7 +229,7 @@ static int __sys_do_default(struct appcore *ac, enum sys_event event)
 	return r;
 }
 
-static int __sys_do(struct appcore *ac, enum sys_event event)
+static int __sys_do(struct appcore *ac, void *event_info, enum sys_event event)
 {
 	struct sys_op *op;
 
@@ -240,7 +240,7 @@ static int __sys_do(struct appcore *ac, enum sys_event event)
 	if (op->func == NULL)
 		return __sys_do_default(ac, event);
 
-	return op->func(op->data);
+	return op->func(event_info, op->data);
 }
 
 static int __sys_lowmem_post(void *data, void *evt)
@@ -269,7 +269,7 @@ static int __sys_lowmem(void *data, void *evt)
 	val = vconf_keynode_get_int(key);
 
 	if (val >= VCONFKEY_SYSMAN_LOW_MEMORY_SOFT_WARNING)
-		return __sys_do(data, SE_LOWMEM);
+		return __sys_do(data, (void *)&val, SE_LOWMEM);
 
 	return 0;
 }
@@ -283,7 +283,7 @@ static int __sys_lowbatt(void *data, void *evt)
 
 	/* VCONFKEY_SYSMAN_BAT_CRITICAL_LOW or VCONFKEY_SYSMAN_POWER_OFF */
 	if (val <= VCONFKEY_SYSMAN_BAT_CRITICAL_LOW)
-		return __sys_do(data, SE_LOWBAT);
+		return __sys_do(data, (void *)&val, SE_LOWBAT);
 
 	return 0;
 }
@@ -296,7 +296,12 @@ static int __sys_langchg_pre(void *data, void *evt)
 
 static int __sys_langchg(void *data, void *evt)
 {
-	return __sys_do(data, SE_LANGCHG);
+	keynode_t *key = evt;
+	char *val;
+
+	val = vconf_keynode_get_str(key);
+
+	return __sys_do(data, (void *)val, SE_LANGCHG);
 }
 
 static int __sys_regionchg_pre(void *data, void *evt)
@@ -307,7 +312,15 @@ static int __sys_regionchg_pre(void *data, void *evt)
 
 static int __sys_regionchg(void *data, void *evt)
 {
-	return __sys_do(data, SE_REGIONCHG);
+	keynode_t *key = evt;
+	char *val = NULL;
+	const char *name;
+
+	name = vconf_keynode_get_name(key);
+	if (!strcmp(name, VCONFKEY_REGIONFORMAT))
+		val = vconf_keynode_get_str(key);
+
+	return __sys_do(data, (void *)val, SE_REGIONCHG);
 }
 
 static void __vconf_do(struct evt_ops *eo, keynode_t * key, void *data)
@@ -440,7 +453,7 @@ EXPORT_API int appcore_set_open_cb(int (*cb) (void *),
 }
 
 EXPORT_API int appcore_set_event_callback(enum appcore_event event,
-					  int (*cb) (void *), void *data)
+					  int (*cb) (void *, void *), void *data)
 {
 	struct appcore *ac = &core;
 	struct sys_op *op;
