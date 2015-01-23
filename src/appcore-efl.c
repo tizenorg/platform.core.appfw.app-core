@@ -108,7 +108,9 @@ static const char *_as_name[] = {
 	[AS_DYING] = "DYING",
 };
 
-static bool b_active = 0;
+static bool b_active = FALSE;
+static bool first_launch = TRUE;
+
 struct win_node {
 	unsigned int win;
 	bool bfobscured;
@@ -255,10 +257,28 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	switch (event) {
 	case AE_RESET:
 		_DBG("[APP %d] RESET", _pid);
-		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:start]",
-		    ui->name);
+		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:start]", ui->name);
 		if (ui->ops->reset)
 			r = ui->ops->reset(b, ui->ops->data);
+		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:done]", ui->name);
+
+		if (first_launch) {
+			first_launch = FALSE;
+			_INFO("[APP %d] Initial Launching, call the resume_cb", _pid);
+			if (ui->ops->resume)
+				r = ui->ops->resume(ui->ops->data);
+		} else {
+			_INFO("[APP %d] App already running, raise the window", _pid);
+#ifdef X11
+			x_raise_win(getpid());
+#endif
+			if (ui->state == AS_PAUSED) {
+				_INFO("[APP %d] Call the resume_cb", _pid);
+				if (ui->ops->resume)
+					r = ui->ops->resume(ui->ops->data);
+			}
+		}
+
 		ui->state = AS_RUNNING;
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:done]",
 		    ui->name);
@@ -488,7 +508,6 @@ static void __set_wm_rotation_support(unsigned int win, unsigned int set)
 	}
 }
 
-Ecore_X_Atom atom_parent;
 #endif
 
 static Eina_Bool __show_cb(void *data, int type, void *event)
@@ -518,13 +537,6 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 	Ecore_X_Window parent;
 
 	ev = event;
-
-	ret = ecore_x_window_prop_window_get(ev->win, atom_parent, &parent, 1);
-	if (ret != 1)
-	{
-		// This is child window. Skip!!!
-		return ECORE_CALLBACK_PASS_ON;
-	}
 
 	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x\n", ev->win);
 
@@ -556,9 +568,9 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 		__delete_win((unsigned int)ev->win);
 
 		bvisibility = __check_visible();
-		if (!bvisibility && b_active == 1) {
+		if (!bvisibility && b_active == TRUE) {
 			_DBG(" Go to Pasue state \n");
-			b_active = 0;
+			b_active = FALSE;
 			__do_app(AE_PAUSE, data, NULL);
 		}
 	}
@@ -572,11 +584,10 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 
 	if (__exist_win((unsigned int)ev->win)) {
 		__delete_win((unsigned int)ev->win);
-		
 		bvisibility = __check_visible();
-		if (!bvisibility && b_active == 1) {
+		if (!bvisibility && b_active == TRUE) {
 			_DBG(" Go to Pasue state \n");
-			b_active = 0;
+			b_active = FALSE;
 			__do_app(AE_PAUSE, data, NULL);
 		}
 	}
@@ -604,14 +615,16 @@ static Eina_Bool __visibility_cb(void *data, int type, void *event)
 #endif
 	bvisibility = __check_visible();
 
-	if (bvisibility && b_active == 0) {
+	_DBG("bvisibility %d, b_active %d", bvisibility, b_active);
+
+	if (bvisibility && b_active == FALSE) {
 		_DBG(" Go to Resume state\n");
-		b_active = 1;
+		b_active = TRUE;
 		__do_app(AE_RESUME, data, NULL);
 
-	} else if (!bvisibility && b_active == 1) {
+	} else if (!bvisibility && b_active == TRUE) {
 		_DBG(" Go to Pasue state \n");
-		b_active = 0;
+		b_active = FALSE;
 		__do_app(AE_PAUSE, data, NULL);
 	} else
 		_DBG(" No change state \n");
@@ -666,12 +679,6 @@ static void __add_climsg_cb(struct ui_priv *ui)
 	ui->hhide =
 	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_DEACTIVATE, __hide_cb, ui);
 #else
-	atom_parent = ecore_x_atom_get("_E_PARENT_BORDER_WINDOW");
-	if (!atom_parent)
-	{
-		// Do Error Handling
-	}
-
 	ui->hshow =
 	    ecore_event_handler_add(ECORE_X_EVENT_WINDOW_SHOW, __show_cb, ui);
 	ui->hhide =
@@ -755,6 +762,12 @@ static void __after_loop(struct ui_priv *ui)
 {
 	appcore_unset_rotation_cb();
 	appcore_exit();
+
+	if (ui->state == AS_RUNNING) {
+		_DBG("[APP %d] PAUSE before termination", _pid);
+		if (ui->ops && ui->ops->pause)
+			ui->ops->pause(ui->ops->data);
+	}
 
 	if (ui->ops && ui->ops->terminate)
 		ui->ops->terminate(ui->ops->data);
