@@ -18,6 +18,7 @@ BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(ecore-x)
 %endif
 Source1001:     app-core.manifest
+BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(aul)
