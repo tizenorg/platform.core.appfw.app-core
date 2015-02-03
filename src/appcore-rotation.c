@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <sensor.h>
+#include <sensor_internal.h>
 #include <vconf.h>
 #include <Ecore.h>
 #include "appcore-internal.h"
