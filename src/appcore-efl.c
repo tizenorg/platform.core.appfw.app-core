@@ -620,6 +620,9 @@ static Eina_Bool __visibility_cb(void *data, int type, void *event)
 	if (bvisibility && b_active == FALSE) {
 		_DBG(" Go to Resume state\n");
 		b_active = TRUE;
+#ifdef X11
+		x_raise_win(getpid());
+#endif
 		__do_app(AE_RESUME, data, NULL);
 
 	} else if (!bvisibility && b_active == TRUE) {
