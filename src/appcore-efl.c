@@ -167,7 +167,7 @@ static int WIN_COMP(gconstpointer data1, gconstpointer data2)
 	return (int)((a->win)-(b->win));
 }
 
-GSList *g_winnode_list = NULL;
+static GSList *g_winnode_list;
 
 #if defined(MEMORY_FLUSH_ACTIVATE)
 static Eina_Bool __appcore_memory_flush_cb(void *data)
@@ -402,7 +402,7 @@ static bool __delete_win(unsigned int win)
 		return 0;
 	}
 
-	g_winnode_list = g_slist_remove_link(g_winnode_list, f);
+	g_winnode_list = g_slist_delete_link(g_winnode_list, f);
 
 	free(f->data);
 
@@ -431,17 +431,12 @@ static bool __update_win(unsigned int win, bool bfobscured)
 
 	g_winnode_list = g_slist_remove_link(g_winnode_list, f);
 
-	free(f->data);
-
-	t = calloc(1, sizeof(struct win_node));
-	if (t == NULL)
-		return FALSE;
-
+	t = f->data;
 	t->win = win;
 	t->bfobscured = bfobscured;
 
-	g_winnode_list = g_slist_append(g_winnode_list, t);
-	
+	g_winnode_list = g_slist_concat(g_winnode_list, f);
+
 	return TRUE;
 
 }
