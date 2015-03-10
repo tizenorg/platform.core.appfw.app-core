@@ -160,13 +160,6 @@ static void _send_to_resourced(enum proc_status_type type)
 	dbus_message_unref(msg);
 }
 
-static int WIN_COMP(gconstpointer data1, gconstpointer data2)
-{
-	struct win_node *a = (struct win_node *)data1;
-	struct win_node *b = (struct win_node *)data2;
-	return (int)((a->win)-(b->win));
-}
-
 static GSList *g_winnode_list;
 
 #if defined(MEMORY_FLUSH_ACTIVATE)
@@ -342,26 +335,33 @@ static bool __check_visible(void)
 	return FALSE;
 }
 
-static bool __exist_win(unsigned int win)
+static GSList *__find_win(unsigned int win)
 {
-	struct win_node temp;
-	GSList *f;
+	GSList *iter;
+	struct win_node *t;
 
-	temp.win = win;
-
-	f = g_slist_find_custom(g_winnode_list, &temp, WIN_COMP);
-	if (f == NULL) {
-		return FALSE;
-	} else {
-		return TRUE;
+	for (iter = g_winnode_list; iter; iter = g_slist_next(iter)) {
+		t = iter->data;
+		if (t && t->win == win)
+			return iter;
 	}
 
+	return NULL;
 }
 
 static bool __add_win(unsigned int win)
 {
 	struct win_node *t;
 	GSList *f;
+
+	_DBG("[EVENT_TEST][EVENT] __add_win WIN:%x\n", win);
+
+	f = __find_win(win);
+	if (f) {
+		errno = ENOENT;
+		_DBG("[EVENT_TEST][EVENT] ERROR There is already window : %x \n", win);
+		return FALSE;
+	}
 
 	t = calloc(1, sizeof(struct win_node));
 	if (t == NULL)
@@ -370,36 +370,21 @@ static bool __add_win(unsigned int win)
 	t->win = win;
 	t->bfobscured = FALSE;
 
-	_DBG("[EVENT_TEST][EVENT] __add_win WIN:%x\n", win);
-
-	f = g_slist_find_custom(g_winnode_list, t, WIN_COMP);
-
-	if (f) {
-		errno = ENOENT;
-		_DBG("[EVENT_TEST][EVENT] ERROR There is already window : %x \n", win);
-		free(t);
-		return 0;
-	}
-
 	g_winnode_list = g_slist_append(g_winnode_list, t);
 
 	return TRUE;
-
 }
 
 static bool __delete_win(unsigned int win)
 {
-	struct win_node temp;
 	GSList *f;
 
-	temp.win = win;
-
-	f = g_slist_find_custom(g_winnode_list, &temp, WIN_COMP);
-	if (f == NULL) {
+	f = __find_win(win);
+	if (!f) {
 		errno = ENOENT;
 		_DBG("[EVENT_TEST][EVENT] ERROR There is no window : %x \n",
-		     win);
-		return 0;
+				win);
+		return FALSE;
 	}
 
 	g_winnode_list = g_slist_delete_link(g_winnode_list, f);
@@ -411,19 +396,14 @@ static bool __delete_win(unsigned int win)
 
 static bool __update_win(unsigned int win, bool bfobscured)
 {
-	struct win_node temp;
 	GSList *f;
-
 	struct win_node *t;
 
 	_DBG("[EVENT_TEST][EVENT] __update_win WIN:%x fully_obscured %d\n", win,
 	     bfobscured);
 
-	temp.win = win;
-
-	f = g_slist_find_custom(g_winnode_list, &temp, WIN_COMP);
-
-	if (f == NULL) {
+	f = __find_win(win);
+	if (!f) {
 		errno = ENOENT;
 		_DBG("[EVENT_TEST][EVENT] ERROR There is no window : %x \n", win);
 		return FALSE;
@@ -520,7 +500,7 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 
 	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x\n", ev->win);
 
-	if (!__exist_win((unsigned int)ev->win))
+	if (!__find_win((unsigned int)ev->win))
 		__add_win((unsigned int)ev->win);
 	else
 		__update_win((unsigned int)ev->win, FALSE);
@@ -535,7 +515,7 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 
 	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x\n", ev->win);
 
-	if (!__exist_win((unsigned int)ev->win)) {
+	if (!__find_win((unsigned int)ev->win)) {
 		/* WM_ROTATE */
 		if ((priv.wm_rot_supported) && (1 == priv.rot_started)) {
 			__set_wm_rotation_support(ev->win, 1);
@@ -559,7 +539,7 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 
 	_DBG("[EVENT_TEST][EVENT] GET HIDE EVENT!!!. WIN:%x\n", ev->win);
 
-	if (__exist_win((unsigned int)ev->win)) {
+	if (__find_win((unsigned int)ev->win)) {
 		__delete_win((unsigned int)ev->win);
 
 		bvisibility = __check_visible();
@@ -577,7 +557,7 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 
 	_DBG("[EVENT_TEST][EVENT] GET HIDE EVENT!!!. WIN:%x\n", ev->win);
 
-	if (__exist_win((unsigned int)ev->win)) {
+	if (__find_win((unsigned int)ev->win)) {
 		__delete_win((unsigned int)ev->win);
 		bvisibility = __check_visible();
 		if (!bvisibility && b_active == TRUE) {
