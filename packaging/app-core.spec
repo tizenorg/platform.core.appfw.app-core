@@ -8,11 +8,6 @@ Release:        0
 Group:          Application Framework/Libraries
 License:        Apache-2.0
 Source0:        app-core-%{version}.tar.gz
-%if %{with wayland}
-Source101:      packaging/core-efl-wayland.target
-%else
-Source101:      packaging/core-efl-x.target
-%endif
 %if %{with x}
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(ecore-x)
@@ -111,8 +106,6 @@ make %{?_smp_mflags}
 %install
 rm -rf %{buildroot}
 %make_install
-install -d %{buildroot}%{_unitdir_user}/core-efl.target.wants
-install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}/core-efl.target
 
 
 %post -n app-core-efl -p /sbin/ldconfig
@@ -141,8 +134,6 @@ install -m0644 %{SOURCE101} %{buildroot}%{_unitdir_user}/core-efl.target
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so.*
-%{_unitdir_user}/core-efl.target
-%{_unitdir_user}/core-efl.target.wants/
 %license LICENSE
 
 %files common-devel
