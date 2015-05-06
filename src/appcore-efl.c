@@ -119,7 +119,6 @@ struct win_node {
 static struct ui_wm_rotate wm_rotate;
 static Eina_Bool __visibility_cb(void *data, int type, void *event);
 
-
 static void _send_to_resourced(enum proc_status_type type)
 {
 	DBusConnection *conn;
@@ -214,6 +213,17 @@ static void __appcore_efl_memory_flush_cb(void)
 	_DBG("[APP %d]   __appcore_efl_memory_flush_cb()", _pid);
 	elm_cache_all_flush();
 }
+#ifdef WAYLAND
+unsigned int win_id;
+
+static void wl_raise_win()
+{
+	_DBG("Raise window : %d", win_id);
+	Ecore_Wl_Window *win;
+	win = ecore_wl_window_find(win_id);
+	ecore_wl_window_activate(win);
+}
+#endif
 
 static void __do_app(enum app_event event, void *data, bundle * b)
 {
@@ -264,6 +274,8 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 			_INFO("[APP %d] App already running, raise the window", _pid);
 #ifdef X11
 			x_raise_win(getpid());
+#else
+			wl_raise_win();
 #endif
 			if (ui->state == AS_PAUSED) {
 				_INFO("[APP %d] Call the resume_cb", _pid);
@@ -488,7 +500,7 @@ static void __set_wm_rotation_support(unsigned int win, unsigned int set)
 static Eina_Bool __show_cb(void *data, int type, void *event)
 {
 #ifdef WAYLAND
-	Ecore_Wl_Event_Window_Activate *ev;
+	Ecore_Wl_Event_Window_Show *ev;
 
 	ev = event;
 
@@ -505,7 +517,7 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 	else
 		__update_win((unsigned int)ev->win, FALSE);
 
-    __visibility_cb(data, type, event);
+    win_id = ev->win;
 #else
 	Ecore_X_Event_Window_Show *ev;
 	int ret;
@@ -532,7 +544,7 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 static Eina_Bool __hide_cb(void *data, int type, void *event)
 {
 #ifdef WAYLAND
-	Ecore_Wl_Event_Window_Deactivate *ev;
+	Ecore_Wl_Event_Window_Hide *ev;
 	int bvisibility = 0;
 
 	ev = event;
@@ -574,12 +586,10 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 static Eina_Bool __visibility_cb(void *data, int type, void *event)
 {
 #ifdef WAYLAND
-	Ecore_Wl_Event_Window_Activate *ev;
+	Ecore_Wl_Event_Window_Visibility_Change *ev;
 	int bvisibility = 0;
-
 	ev = event;
-
-	__update_win((unsigned int)ev->win, ev->fobscured);
+	__update_win((unsigned int)ev->win, ev->fully_obscured);
 #else
 	Ecore_X_Event_Window_Visibility_Change *ev;
 	int bvisibility = 0;
@@ -650,9 +660,12 @@ static void __add_climsg_cb(struct ui_priv *ui)
 	_ret_if(ui == NULL);
 #ifdef WAYLAND
 	ui->hshow =
-	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_ACTIVATE, __show_cb, ui);
+	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_SHOW, __show_cb, ui);
 	ui->hhide =
-	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_DEACTIVATE, __hide_cb, ui);
+	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_HIDE, __hide_cb, ui);
+	ui->hvchange =
+	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_VISIBILITY_CHANGE,
+				    __visibility_cb, ui);
 #else
 	ui->hshow =
 	    ecore_event_handler_add(ECORE_X_EVENT_WINDOW_SHOW, __show_cb, ui);
