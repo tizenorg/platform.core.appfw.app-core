@@ -256,6 +256,15 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		return;
 	}
 
+	if (event == AE_RAISE) {
+#ifdef X11
+		x_raise_win(getpid());
+#else
+		wl_raise_win();
+#endif
+		return;
+	}
+
 	_ret_if(ui->ops == NULL);
 
 	switch (event) {
