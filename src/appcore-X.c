@@ -169,3 +169,39 @@ EXPORT_API int x_raise_win(pid_t pid)
 
 	return r;
 }
+
+int x_pause_win(pid_t pid)
+{
+	int r;
+	Display *d;
+	Window win;
+	Eina_List *list_win = NULL;
+
+	if (pid < 1) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	r = kill(pid, 0);
+	if (r == -1) {
+		errno = ESRCH;
+		return -1;
+	}
+
+	d = XOpenDisplay(NULL);
+	_retv_if(d == NULL, -1);
+
+	win = XDefaultRootWindow(d);
+	if (!a_pid)
+		a_pid = XInternAtom(d, "_NET_WM_PID", True);
+
+	__foreach_win(&list_win, d, &win, pid);
+	r = __iconify_win(list_win, d);
+
+	XCloseDisplay(d);
+
+	if (list_win)
+		eina_list_free(list_win);
+
+	return r;
+}
