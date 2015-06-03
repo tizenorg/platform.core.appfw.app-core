@@ -64,10 +64,6 @@ Application basics common
 Summary:    App basics common (devel)
 Group:      Development/Libraries
 Requires:   %{name}-common = %{version}-%{release}
-Requires:   pkgconfig(sensor)
-Requires:   pkgconfig(vconf)
-Requires:   pkgconfig(elementary)
-Requires:   pkgconfig(aul)
 %if %{with x}
 Requires:   pkgconfig(x11)
 %endif
@@ -85,7 +81,7 @@ Application basics template
 
 
 %prep
-%setup -q 
+%setup -q
 cp %{SOURCE1001} .
 
 
