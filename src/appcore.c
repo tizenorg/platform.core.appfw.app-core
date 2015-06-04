@@ -172,6 +172,18 @@ static int __app_terminate(void *data)
 	return 0;
 }
 
+static int __bgapp_terminate(void *data)
+{
+        struct appcore *ac = data;
+
+        _retv_if(ac == NULL || ac->ops == NULL, -1);
+        _retv_if(ac->ops->cb_app == NULL, 0);
+
+        ac->ops->cb_app(AE_TERMINATE_BGAPP, ac->ops->data, NULL);
+
+        return 0;
+}
+
 static gboolean __prt_ltime(gpointer data)
 {
 	int msec;
@@ -203,6 +215,16 @@ static int __app_resume(void *data)
 	_retv_if(ac->ops->cb_app == NULL, 0);
 
 	ac->ops->cb_app(AE_RAISE, ac->ops->data, NULL);
+	return 0;
+}
+
+static int __app_pause(void *data)
+{
+	struct appcore *ac = data;
+	_retv_if(ac == NULL || ac->ops == NULL, -1);
+	_retv_if(ac->ops->cb_app == NULL, 0);
+
+	ac->ops->cb_app(AE_LOWER, ac->ops->data, NULL);
 	return 0;
 }
 
@@ -421,6 +443,14 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 	case AUL_TERMINATE:
 		_DBG("[APP %d]     AUL event: AUL_TERMINATE", _pid);
 		__app_terminate(data);
+		break;
+	case AUL_TERMINATE_BGAPP:
+		_DBG("[APP %d]     AUL event: AUL_TERMINATE_BGAPP", _pid);
+		__bgapp_terminate(data);
+		break;
+	case AUL_PAUSE:
+		_DBG("[APP %d]	   AUL event: AUL_PAUSE", _pid);
+		__app_pause(data);
 		break;
 	default:
 		_DBG("[APP %d]     AUL event: %d", _pid, type);

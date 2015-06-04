@@ -265,6 +265,14 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		return;
 	}
 
+	if (event == AE_LOWER) {
+#ifdef X11
+		x_pause_win(getpid());
+		return;
+#endif
+		/* TODO: wayland support */
+	}
+
 	_ret_if(ui->ops == NULL);
 
 	switch (event) {
@@ -328,6 +336,18 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:Launching:done]",
 		    ui->name);
 		_send_to_resourced(PROC_STATUS_FOREGRD);
+		break;
+	case AE_TERMINATE_BGAPP:
+		if (ui->state == AS_PAUSED) {
+			_DBG("[APP %d] is paused. TERMINATE", _pid);
+                        ui->state = AS_DYING;
+			aul_status_update(STATUS_DYING);
+                        elm_exit();
+		} else if (ui->state == AS_RUNNING) {
+			_DBG("[APP %d] is running.", _pid);
+		} else {
+			_DBG("[APP %d] is another state", _pid);
+		}
 		break;
 	default:
 		/* do nothing */
@@ -555,24 +575,9 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 {
 #ifdef WAYLAND
 	Ecore_Wl_Event_Window_Hide *ev;
-	int bvisibility = 0;
-
-	ev = event;
-
-	_DBG("[EVENT_TEST][EVENT] GET HIDE EVENT!!!. WIN:%x\n", ev->win);
-
-	if (__find_win((unsigned int)ev->win)) {
-		__delete_win((unsigned int)ev->win);
-
-		bvisibility = __check_visible();
-		if (!bvisibility && b_active == TRUE) {
-			_DBG(" Go to Pasue state \n");
-			b_active = FALSE;
-			__do_app(AE_PAUSE, data, NULL);
-		}
-	}
 #else
 	Ecore_X_Event_Window_Hide *ev;
+#endif
 	int bvisibility = 0;
 
 	ev = event;
@@ -588,7 +593,6 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 			__do_app(AE_PAUSE, data, NULL);
 		}
 	}
-#endif
 
 	return ECORE_CALLBACK_RENEW;
 }

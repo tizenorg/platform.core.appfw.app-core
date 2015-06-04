@@ -108,9 +108,11 @@ enum app_event {
 	AE_UNKNOWN,
 	AE_CREATE,
 	AE_TERMINATE,
+	AE_TERMINATE_BGAPP,
 	AE_PAUSE,
 	AE_RESUME,
 	AE_RAISE,
+	AE_LOWER,
 	AE_RESET,
 	AE_LOWMEM_POST,
 	AE_MEM_FLUSH,
@@ -163,6 +165,7 @@ void update_region(void);
 
 /* appcore-X.c */
 extern int x_raise_win(pid_t pid);
+extern int x_pause_win(pid_t pid);
 
 /* appcore-util.c */
 /* extern void stack_trim(void);*/
