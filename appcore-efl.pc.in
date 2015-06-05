@@ -8,6 +8,6 @@ includedir=@INCLUDEDIR@
 Name: app-core-efl
 Description: SAMSUNG Linux platform efl application library
 Version: @VERSION@
-Requires.private: elementary appcore-common dlog
+Requires: elementary appcore-common dlog
 Libs: -L${libdir} -lappcore-efl
 Cflags: -I${includedir} -I${includedir}/appcore

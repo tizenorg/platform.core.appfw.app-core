@@ -8,6 +8,6 @@ includedir=@INCLUDEDIR@
 Name: app-core-common
 Description: SAMSUNG Linux platform application library
 Version: @VERSION@
-Requires.private: sensor vconf aul dlog x11
+Requires: sensor vconf aul dlog x11
 Libs: -L${libdir} -lappcore-common
 Cflags: -I${includedir} -I${includedir}/appcore
