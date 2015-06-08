@@ -31,7 +31,7 @@ ENDIF (with_wayland)
 IF (with_x11)
        ADD_DEFINITIONS("-DX11")
        SET(SRCS_common ${SRCS_common} src/appcore-X.c)
-ENDIF (with_wayland)
+ENDIF (with_x11)
 
 SET(HEADERS_common appcore-common.h)
 
@@ -39,9 +39,10 @@ INCLUDE(FindPkgConfig)
 SET(APPCORE_PKG_CHECK_MODULES "dbus-1 vconf sensor aul dlog libtzplatform-config ecore")
 IF (with_x11)
        SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} x11 eina ecore-x")
-ELSEIF (with_wayland)
-       SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} ecore-wayland")
 ENDIF (with_x11)
+IF (with_wayland)
+       SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} ecore-wayland")
+ENDIF (with_wayland)
 
 
 pkg_check_modules(pkg_common REQUIRED ${APPCORE_PKG_CHECK_MODULES})

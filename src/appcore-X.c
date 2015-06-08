@@ -223,7 +223,7 @@ EXPORT_API int x_raise_win(pid_t pid)
 	return r;
 }
 
-int x_pause_win(pid_t pid)
+EXPORT_API int x_pause_win(pid_t pid)
 {
 	int r;
 	Display *d;
