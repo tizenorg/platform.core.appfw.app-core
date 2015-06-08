@@ -38,7 +38,7 @@ SET(HEADERS_common appcore-common.h)
 INCLUDE(FindPkgConfig)
 SET(APPCORE_PKG_CHECK_MODULES "dbus-1 vconf sensor aul dlog libtzplatform-config ecore")
 IF (with_x11)
-       SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} x11 ecore-x")
+       SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} x11 eina ecore-x")
 ENDIF (with_x11)
 
 pkg_check_modules(pkg_common REQUIRED ${APPCORE_PKG_CHECK_MODULES})

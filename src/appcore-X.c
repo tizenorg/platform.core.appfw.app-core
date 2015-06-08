@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <signal.h>
 
+#include <Eina.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
@@ -98,6 +99,58 @@ static int __find_win(Display *d, Window *win, pid_t pid)
 
 		if (found)
 			return 1;
+	}
+
+	return 0;
+}
+
+static void __add_win_list(Eina_List **list, Window *win)
+{
+	Window w;
+	Eina_List *l;
+
+	if (!list || !win)
+		return;
+
+	EINA_LIST_FOREACH(*list, l, w) {
+		if (w == *win)
+			return;
+	}
+
+	*list = eina_list_append(*list, *win);
+}
+
+static void __foreach_win(Eina_List **list, Display *d, Window *win, pid_t pid)
+{
+	int i;
+	int r;
+	pid_t p;
+	unsigned int n;
+	Window root, parent, *child;
+
+	p = __get_win_pid(d, *win);
+	if (p == pid)
+		__add_win_list(list, win);
+
+	r = XQueryTree(d, *win, &root, &parent, &child, &n);
+	if (r) {
+		for (i = 0; i < n; i++) {
+			__foreach_win(list, d, &child[i], pid);
+		}
+		XFree(child);
+	}
+}
+
+static int __iconify_win(Eina_List *list, Display *d)
+{
+	Window w;
+	Eina_List *l;
+
+	if (!list || !d)
+		return -1;
+
+	EINA_LIST_FOREACH(list, l, w) {
+		XIconifyWindow(d, w, 0);
 	}
 
 	return 0;
