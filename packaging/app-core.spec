@@ -11,6 +11,9 @@ Source0:        app-core-%{version}.tar.gz
 %if %{with x}
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(ecore-x)
+BuildRequires:  pkgconfig(eina)
+%else if %{with wayland}
+BuildRequires:  pkgconfig(ecore-wayland)
 %endif
 Source1001:     app-core.manifest
 BuildRequires:  pkgconfig(dbus-1)
