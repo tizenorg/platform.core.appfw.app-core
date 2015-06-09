@@ -52,7 +52,9 @@
 extern "C" {
 #endif
 
+#ifndef _
 #define _(str) gettext(str)  /**< gettext alias */
+#endif
 #define gettext_noop(str) (str)	/**< keyword for xgettext
 				  to extract translatable strings */
 #define N_(str) gettext_noop(str)  /**< gettext_noop alias */
