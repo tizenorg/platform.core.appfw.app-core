@@ -85,6 +85,7 @@ struct ui_priv {
 	int (*rot_cb) (void *event_info, enum appcore_rm, void *);
 	void *rot_cb_data;
 	enum appcore_rm rot_mode;
+	bundle *pending_data;
 };
 
 static struct ui_priv priv;
@@ -115,6 +116,10 @@ struct win_node {
 	unsigned int win;
 	bool bfobscured;
 };
+
+#ifdef WAYLAND
+static unsigned int surface;
+#endif
 
 static struct ui_wm_rotate wm_rotate;
 static Eina_Bool __visibility_cb(void *data, int type, void *event);
@@ -278,6 +283,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	switch (event) {
 	case AE_RESET:
 		_DBG("[APP %d] RESET", _pid);
+		ui->pending_data = bundle_dup(b);
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:start]", ui->name);
 		if (ui->ops->reset)
 			r = ui->ops->reset(b, ui->ops->data);
@@ -285,9 +291,6 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 
 		if (first_launch) {
 			first_launch = FALSE;
-			_INFO("[APP %d] Initial Launching, call the resume_cb", _pid);
-			if (ui->ops->resume)
-				r = ui->ops->resume(ui->ops->data);
 		} else {
 			_INFO("[APP %d] App already running, raise the window", _pid);
 #ifdef X11
@@ -295,14 +298,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 #else
 			wl_raise_win();
 #endif
-			if (ui->state == AS_PAUSED) {
-				_INFO("[APP %d] Call the resume_cb", _pid);
-				if (ui->ops->resume)
-					r = ui->ops->resume(ui->ops->data);
-			}
 		}
-
-		ui->state = AS_RUNNING;
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:done]",
 		    ui->name);
 		break;
@@ -321,13 +317,21 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		break;
 	case AE_RESUME:
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:start]",
-		    ui->name);
-		if (ui->state == AS_PAUSED || tmp_val == 1) {
+				ui->name);
+		if (ui->state == AS_PAUSED || ui->state == AS_CREATED) {
 			_DBG("[APP %d] RESUME", _pid);
-			if (ui->ops->resume)
-				r = ui->ops->resume(ui->ops->data);
+
+			if (ui->state == AS_CREATED) {
+				appcore_group_reset(ui->pending_data);
+				bundle_free(ui->pending_data);
+				ui->pending_data = NULL;
+			} else {
+				appcore_group_resume();
+				if (ui->ops->resume) {
+					ui->ops->resume(ui->ops->data);
+				}
+			}
 			ui->state = AS_RUNNING;
-			 tmp_val = 0;
 		}
 		/*TODO : rotation start*/
 		//r = appcore_resume_rotation_cb();
@@ -533,14 +537,13 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 	Ecore_Wl_Event_Window_Show *ev;
 
 	ev = event;
-
 	if (ev->parent_win != 0)
 	{
 		// This is child window. Skip!!!
 		return ECORE_CALLBACK_PASS_ON;
 	}
 
-	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x\n", ev->win);
+	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x, %d\n", ev->win, ev->data[0]);
 
 	if (!__find_win((unsigned int)ev->win))
 		__add_win((unsigned int)ev->win);
@@ -548,6 +551,7 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 		__update_win((unsigned int)ev->win, FALSE);
 
 	win_id = ev->win;
+	surface = (unsigned int)ev->data[0];
 #else
 	Ecore_X_Event_Window_Show *ev;
 	int ret;
@@ -949,4 +953,19 @@ EXPORT_API int appcore_set_app_state(int state)
 	tmp_val = 1;
 
 	return 0;
+}
+
+EXPORT_API unsigned int appcore_get_main_window()
+{
+#ifdef X11
+	struct win_node *entry = NULL;
+
+	if (g_winnode_list != NULL) {
+		entry = g_winnode_list->data;
+		return (unsigned int) entry->win;
+	}
+	return 0;
+#else
+	return surface;
+#endif
 }

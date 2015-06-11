@@ -75,11 +75,11 @@ INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/SLP_Appcore_PG.h DESTINATION i
 # Build appcore-efl Library
 # ------------------------------
 SET(APPCORE_EFL "appcore-efl")
-SET(SRCS_efl src/appcore-efl.c)
+SET(SRCS_efl src/appcore-efl.c src/appcore-group.c)
 SET(HEADERS_efl appcore-efl.h)
 
 INCLUDE(FindPkgConfig)
-SET(APPCORE_PKG_CHECK_MODULES2 "elementary dlog ecore gobject-2.0 glib-2.0 aul")
+SET(APPCORE_PKG_CHECK_MODULES2 "elementary dlog ecore gobject-2.0 glib-2.0 aul pkgmgr-info")
 IF (with_x11)
         SET(APPCORE_PKG_CHECK_MODULES2 "${APPCORE_PKG_CHECK_MODULES2} ecore-x")
 ENDIF (with_x11)
