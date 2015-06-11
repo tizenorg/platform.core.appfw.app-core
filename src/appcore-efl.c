@@ -85,6 +85,7 @@ struct ui_priv {
 	int (*rot_cb) (void *event_info, enum appcore_rm, void *);
 	void *rot_cb_data;
 	enum appcore_rm rot_mode;
+	bundle *pending_data;
 };
 
 static struct ui_priv priv;
@@ -113,6 +114,9 @@ static bool first_launch = TRUE;
 
 struct win_node {
 	unsigned int win;
+#ifdef WAYLAND
+	unsigned int surf;
+#endif
 	bool bfobscured;
 };
 
@@ -215,12 +219,11 @@ static void __appcore_efl_memory_flush_cb(void)
 	elm_cache_all_flush();
 }
 #ifdef WAYLAND
-static unsigned int win_id;
-
 static void wl_raise_win()
 {
-	_DBG("Raise window : %d", win_id);
 	Ecore_Wl_Window *win;
+	unsigned int win_id = appcore_get_main_window();
+	_DBG("Raise window : %d", win_id);
 	win = ecore_wl_window_find(win_id);
 	ecore_wl_window_activate(win);
 }
@@ -278,6 +281,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	switch (event) {
 	case AE_RESET:
 		_DBG("[APP %d] RESET", _pid);
+		ui->pending_data = bundle_dup(b);
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:start]", ui->name);
 		if (ui->ops->reset)
 			r = ui->ops->reset(b, ui->ops->data);
@@ -285,9 +289,6 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 
 		if (first_launch) {
 			first_launch = FALSE;
-			_INFO("[APP %d] Initial Launching, call the resume_cb", _pid);
-			if (ui->ops->resume)
-				r = ui->ops->resume(ui->ops->data);
 		} else {
 			_INFO("[APP %d] App already running, raise the window", _pid);
 #ifdef X11
@@ -295,14 +296,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 #else
 			wl_raise_win();
 #endif
-			if (ui->state == AS_PAUSED) {
-				_INFO("[APP %d] Call the resume_cb", _pid);
-				if (ui->ops->resume)
-					r = ui->ops->resume(ui->ops->data);
-			}
 		}
-
-		ui->state = AS_RUNNING;
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:done]",
 		    ui->name);
 		break;
@@ -321,13 +315,21 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		break;
 	case AE_RESUME:
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:start]",
-		    ui->name);
-		if (ui->state == AS_PAUSED || tmp_val == 1) {
+				ui->name);
+		if (ui->state == AS_PAUSED || ui->state == AS_CREATED) {
 			_DBG("[APP %d] RESUME", _pid);
-			if (ui->ops->resume)
-				r = ui->ops->resume(ui->ops->data);
+
+			if (ui->state == AS_CREATED) {
+				appcore_group_reset(ui->pending_data);
+				bundle_free(ui->pending_data);
+				ui->pending_data = NULL;
+			} else {
+				appcore_group_resume();
+				if (ui->ops->resume) {
+					ui->ops->resume(ui->ops->data);
+				}
+			}
 			ui->state = AS_RUNNING;
-			 tmp_val = 0;
 		}
 		/*TODO : rotation start*/
 		//r = appcore_resume_rotation_cb();
@@ -391,6 +393,7 @@ static GSList *__find_win(unsigned int win)
 	return NULL;
 }
 
+#ifdef X11
 static bool __add_win(unsigned int win)
 {
 	struct win_node *t;
@@ -416,6 +419,34 @@ static bool __add_win(unsigned int win)
 
 	return TRUE;
 }
+#else
+static bool __add_win(unsigned int win, unsigned int surf)
+{
+	struct win_node *t;
+	GSList *f;
+
+	_DBG("[EVENT_TEST][EVENT] __add_win WIN:%x\n", win);
+
+	f = __find_win(win);
+	if (f) {
+		errno = ENOENT;
+		_DBG("[EVENT_TEST][EVENT] ERROR There is already window : %x \n", win);
+		return FALSE;
+	}
+
+	t = calloc(1, sizeof(struct win_node));
+	if (t == NULL)
+		return FALSE;
+
+	t->win = win;
+	t->surf = surf;
+	t->bfobscured = FALSE;
+
+	g_winnode_list = g_slist_append(g_winnode_list, t);
+
+	return TRUE;
+}
+#endif
 
 static bool __delete_win(unsigned int win)
 {
@@ -436,6 +467,7 @@ static bool __delete_win(unsigned int win)
 	return TRUE;
 }
 
+#ifdef X11
 static bool __update_win(unsigned int win, bool bfobscured)
 {
 	GSList *f;
@@ -453,15 +485,43 @@ static bool __update_win(unsigned int win, bool bfobscured)
 
 	g_winnode_list = g_slist_remove_link(g_winnode_list, f);
 
-	t = f->data;
+	t = (struct win_node *)f->data;
 	t->win = win;
 	t->bfobscured = bfobscured;
 
 	g_winnode_list = g_slist_concat(g_winnode_list, f);
 
 	return TRUE;
-
 }
+#else
+static bool __update_win(unsigned int win, unsigned int surf, bool bfobscured)
+{
+	GSList *f;
+	struct win_node *t;
+
+	_DBG("[EVENT_TEST][EVENT] __update_win WIN:%x fully_obscured %d\n", win,
+	     bfobscured);
+
+	f = __find_win(win);
+	if (!f) {
+		errno = ENOENT;
+		_DBG("[EVENT_TEST][EVENT] ERROR There is no window : %x \n", win);
+		return FALSE;
+	}
+
+	g_winnode_list = g_slist_remove_link(g_winnode_list, f);
+
+	t = (struct win_node *)f->data;
+	t->win = win;
+	if (surf != 0)
+		t->surf = surf;
+	t->bfobscured = bfobscured;
+
+	g_winnode_list = g_slist_concat(g_winnode_list, f);
+
+	return TRUE;
+}
+#endif
 
 /* WM_ROTATE */
 #ifdef X11
@@ -533,21 +593,19 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 	Ecore_Wl_Event_Window_Show *ev;
 
 	ev = event;
-
 	if (ev->parent_win != 0)
 	{
 		// This is child window. Skip!!!
 		return ECORE_CALLBACK_PASS_ON;
 	}
 
-	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x\n", ev->win);
+	_DBG("[EVENT_TEST][EVENT] GET SHOW EVENT!!!. WIN:%x, %d\n", ev->win, ev->data[0]);
 
 	if (!__find_win((unsigned int)ev->win))
-		__add_win((unsigned int)ev->win);
+		__add_win((unsigned int)ev->win, (unsigned int)ev->data[0]);
 	else
-		__update_win((unsigned int)ev->win, FALSE);
+		__update_win((unsigned int)ev->win, (unsigned int)ev->data[0], FALSE);
 
-	win_id = ev->win;
 #else
 	Ecore_X_Event_Window_Show *ev;
 	int ret;
@@ -603,7 +661,7 @@ static Eina_Bool __visibility_cb(void *data, int type, void *event)
 	Ecore_Wl_Event_Window_Visibility_Change *ev;
 	int bvisibility = 0;
 	ev = event;
-	__update_win((unsigned int)ev->win, ev->fully_obscured);
+	__update_win((unsigned int)ev->win, 0, ev->fully_obscured);
 #else
 	Ecore_X_Event_Window_Visibility_Change *ev;
 	int bvisibility = 0;
@@ -950,3 +1008,26 @@ EXPORT_API int appcore_set_app_state(int state)
 
 	return 0;
 }
+
+EXPORT_API unsigned int appcore_get_main_window()
+{
+	struct win_node *entry = NULL;
+
+	if (g_winnode_list != NULL) {
+		entry = g_winnode_list->data;
+		return (unsigned int) entry->win;
+	}
+	return 0;
+}
+#ifdef WAYLAND
+EXPORT_API unsigned int appcore_get_main_surface()
+{
+	struct win_node *entry = NULL;
+
+	if (g_winnode_list != NULL) {
+		entry = g_winnode_list->data;
+		return (unsigned int) entry->surf;
+	}
+	return 0;
+}
+#endif
