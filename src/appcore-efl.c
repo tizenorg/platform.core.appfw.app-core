@@ -802,9 +802,11 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 	LOG(LOG_DEBUG, "LAUNCH", "[%s:Platform:appcore_init:done]", ui->name);
 	if (ui->ops && ui->ops->create) {
 		r = ui->ops->create(ui->ops->data);
-		if (r == -1) {
+		if (r < 0) {
 			_ERR("create() return error");
 			appcore_exit();
+			if (ui->ops && ui->ops->terminate)
+				ui->ops->terminate(ui->ops->data);
 			errno = ECANCELED;
 			return -1;
 		}
