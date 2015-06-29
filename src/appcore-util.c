@@ -37,6 +37,7 @@
 
 void stack_trim(void)
 {
+#if sizeof(unsigned int) == sizeof(void*)
 	unsigned int sp;
 	char buf[BUF_SIZE];
 	FILE *file;
@@ -62,4 +63,5 @@ void stack_trim(void)
 		     MADV_DONTNEED) < 0)
 			perror("stack madvise fail");
 	}
+#endif
 }
