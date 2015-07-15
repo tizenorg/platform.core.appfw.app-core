@@ -460,9 +460,8 @@ static bool __delete_win(unsigned int win)
 		return FALSE;
 	}
 
-	g_winnode_list = g_slist_delete_link(g_winnode_list, f);
-
 	free(f->data);
+	g_winnode_list = g_slist_delete_link(g_winnode_list, f);
 
 	return TRUE;
 }
