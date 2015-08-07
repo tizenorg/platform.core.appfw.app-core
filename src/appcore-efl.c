@@ -252,9 +252,13 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	if (!(ui->state == AS_PAUSED && event == AE_PAUSE))
 		__appcore_timer_del(ui);
 
+	if (ui->state == AS_DYING) {
+		_ERR("Skip the event in dying state");
+		return;
+	}
+
 	if (event == AE_TERMINATE) {
 		_DBG("[APP %d] TERMINATE", _pid);
-		ui->state = AS_DYING;
 		elm_exit();
 		return;
 	}
@@ -325,9 +329,10 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 				ui->pending_data = NULL;
 			} else {
 				appcore_group_resume();
-				if (ui->ops->resume) {
-					ui->ops->resume(ui->ops->data);
-				}
+			}
+
+			if (ui->ops->resume) {
+				ui->ops->resume(ui->ops->data);
 			}
 			ui->state = AS_RUNNING;
 		}
@@ -832,6 +837,8 @@ static void __after_loop(struct ui_priv *ui)
 
 	if (ui->ops && ui->ops->terminate)
 		ui->ops->terminate(ui->ops->data);
+
+	ui->state = AS_DYING;
 
 	if (ui->hshow)
 		ecore_event_handler_del(ui->hshow);
