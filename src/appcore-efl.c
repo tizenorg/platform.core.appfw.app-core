@@ -325,9 +325,10 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 				ui->pending_data = NULL;
 			} else {
 				appcore_group_resume();
-				if (ui->ops->resume) {
-					ui->ops->resume(ui->ops->data);
-				}
+			}
+
+			if (ui->ops->resume) {
+				ui->ops->resume(ui->ops->data);
 			}
 			ui->state = AS_RUNNING;
 		}
