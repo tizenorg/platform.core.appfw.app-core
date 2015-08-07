@@ -252,6 +252,11 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	if (!(ui->state == AS_PAUSED && event == AE_PAUSE))
 		__appcore_timer_del(ui);
 
+	if (ui->state == AS_DYING) {
+		_ERR("Skip the event in dying state");
+		return;
+	}
+
 	if (event == AE_TERMINATE) {
 		_DBG("[APP %d] TERMINATE", _pid);
 		ui->state = AS_DYING;
