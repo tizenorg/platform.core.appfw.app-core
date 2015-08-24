@@ -260,6 +260,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	if (event == AE_TERMINATE) {
 		_DBG("[APP %d] TERMINATE", _pid);
 		elm_exit();
+		aul_status_update(STATUS_DYING);
 		return;
 	}
 
@@ -315,6 +316,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		}
 		/* TODO : rotation stop */
 		//r = appcore_pause_rotation_cb();
+		aul_status_update(STATUS_BG);
 		_send_to_resourced(PROC_STATUS_BACKGRD);
 		break;
 	case AE_RESUME:
@@ -342,6 +344,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		    ui->name);
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:Launching:done]",
 		    ui->name);
+		aul_status_update(STATUS_VISIBLE);
 		_send_to_resourced(PROC_STATUS_FOREGRD);
 		break;
 	case AE_TERMINATE_BGAPP:
