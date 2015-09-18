@@ -12,8 +12,10 @@ Source0:        app-core-%{version}.tar.gz
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(ecore-x)
 BuildRequires:  pkgconfig(eina)
-%else if %{with wayland}
+%else
+%if %{with wayland}
 BuildRequires:  pkgconfig(ecore-wayland)
+%endif
 %endif
 Source1001:     app-core.manifest
 BuildRequires:  pkgconfig(dbus-1)
@@ -123,26 +125,22 @@ rm -rf %{buildroot}
 
 %files efl
 %manifest %{name}.manifest
-%defattr(-,root,root,-)
 %{_libdir}/libappcore-efl.so.*
 %license LICENSE
 
 %files efl-devel
 %manifest %{name}.manifest
-%defattr(-,root,root,-)
 %{_includedir}/appcore/appcore-efl.h
 %{_libdir}/libappcore-efl.so
 %{_libdir}/pkgconfig/appcore-efl.pc
 
 %files common
 %manifest %{name}.manifest
-%defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so.*
 %license LICENSE
 
 %files common-devel
 %manifest %{name}.manifest
-%defattr(-,root,root,-)
 %{_libdir}/libappcore-common.so
 %{_libdir}/pkgconfig/appcore-common.pc
 %{_includedir}/appcore/appcore-common.h
