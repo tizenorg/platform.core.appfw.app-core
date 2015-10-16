@@ -52,6 +52,12 @@
 extern "C" {
 #endif
 
+int appcore_efl_init(const char *name, int *argc, char ***argv,
+		     struct appcore_ops *ops);
+
+void appcore_efl_fini(void);
+
+
 /**
  * @par Description:
  * This is a main function for EFL application on SLP platform. \n
