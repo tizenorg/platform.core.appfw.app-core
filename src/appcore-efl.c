@@ -29,11 +29,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef WAYLAND
+#if defined(WAYLAND)
 #include <Ecore_Wayland.h>
-#endif
-
-#ifdef X11
+#elif defined(X11)
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <Ecore_X.h>
@@ -49,15 +47,16 @@
 #include <dbus/dbus.h>
 #include <stdbool.h>
 #include <aul.h>
+
 #include "appcore-internal.h"
 #include "appcore-efl.h"
 
 static pid_t _pid;
-
 static bool resource_reclaiming = TRUE;
 static int tmp_val = 0;
 
-enum proc_status_type { /** cgroup command type **/
+/* cgroup command type */
+enum proc_status_type {
 	PROC_STATUS_LAUNCH,
 	PROC_STATUS_RESUME,
 	PROC_STATUS_TERMINATE,
@@ -74,10 +73,10 @@ struct ui_priv {
 	Ecore_Event_Handler *hvchange;
 	Ecore_Event_Handler *hcmsg; /* WM_ROTATE */
 
-	Ecore_Timer *mftimer;	/* Ecore Timer for memory flushing */
+	Ecore_Timer *mftimer; /* Ecore Timer for memory flushing */
 
 	struct appcore_ops *ops;
-	void (*mfcb) (void);	/* Memory Flushing Callback */
+	void (*mfcb) (void); /* Memory Flushing Callback */
 
 	/* WM_ROTATE */
 	int wm_rot_supported;
@@ -123,7 +122,6 @@ struct win_node {
 static struct ui_wm_rotate wm_rotate;
 static Eina_Bool __visibility_cb(void *data, int type, void *event);
 
-
 static void _send_to_resourced(enum proc_status_type type)
 {
 	DBusConnection *conn;
@@ -157,9 +155,8 @@ static void _send_to_resourced(enum proc_status_type type)
 		return;
 	}
 
-	if (!dbus_connection_send (conn, msg, NULL)) {
+	if (!dbus_connection_send(conn, msg, NULL))
 		_ERR("dbus_connection_send is failed");
-	}
 
 	dbus_message_unref(msg);
 }
@@ -179,11 +176,10 @@ static Eina_Bool __appcore_memory_flush_cb(void *data)
 
 static int __appcore_low_memory_post_cb(struct ui_priv *ui)
 {
-	if (ui->state == AS_PAUSED) {
+	if (ui->state == AS_PAUSED)
 		appcore_flush_memory();
-	} else {
+	else
 		malloc_trim(0);
-	}
 
 	return 0;
 }
@@ -219,14 +215,35 @@ static void __appcore_efl_memory_flush_cb(void)
 	elm_cache_all_flush();
 }
 #ifdef WAYLAND
-static void wl_raise_win()
+static void wl_raise_win(void)
 {
 	Ecore_Wl_Window *win;
 	unsigned int win_id = appcore_get_main_window();
-	_DBG("Raise window : %d", win_id);
+
+	_DBG("Raise window: %d", win_id);
 	win = ecore_wl_window_find(win_id);
 	ecore_wl_window_activate(win);
 }
+
+static void wl_pause_win(void)
+{
+	Ecore_Wl_Window *win;
+	GSList *wlist = g_winnode_list;
+	struct win_node *entry = NULL;
+
+	_DBG("Pause window");
+
+	while (wlist) {
+		entry = wlist->data;
+
+		_DBG("Pause window: %d", entry->win);
+		win = ecore_wl_window_find(entry->win);
+		ecore_wl_window_iconified_set(win, EINA_TRUE);
+
+		wlist = wlist->next;
+	}
+}
+
 #endif
 
 static void __do_app(enum app_event event, void *data, bundle * b)
@@ -265,20 +282,21 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	}
 
 	if (event == AE_RAISE) {
-#ifdef X11
+#if defined(X11)
 		x_raise_win(getpid());
-#else
+#elif defined(WAYLAND)
 		wl_raise_win();
 #endif
 		return;
 	}
 
 	if (event == AE_LOWER) {
-#ifdef X11
+#if defined(X11)
 		x_pause_win(getpid());
-		return;
+#elif defined(WAYLAND)
+		wl_pause_win();
 #endif
-		/* TODO: wayland support */
+		return;
 	}
 
 	_ret_if(ui->ops == NULL);
@@ -311,11 +329,11 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 			if (ui->ops->pause)
 				r = ui->ops->pause(ui->ops->data);
 			ui->state = AS_PAUSED;
-			if(r >= 0 && resource_reclaiming == TRUE)
+			if (r >= 0 && resource_reclaiming == TRUE)
 				__appcore_timer_add(ui);
 		}
 		/* TODO : rotation stop */
-		//r = appcore_pause_rotation_cb();
+		/* r = appcore_pause_rotation_cb(); */
 		aul_status_update(STATUS_BG);
 		_send_to_resourced(PROC_STATUS_BACKGRD);
 		break;
@@ -333,13 +351,12 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 				appcore_group_resume();
 			}
 
-			if (ui->ops->resume) {
+			if (ui->ops->resume)
 				ui->ops->resume(ui->ops->data);
-			}
 			ui->state = AS_RUNNING;
 		}
 		/*TODO : rotation start*/
-		//r = appcore_resume_rotation_cb();
+		/* r = appcore_resume_rotation_cb(); */
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:done]",
 		    ui->name);
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:Launching:done]",
@@ -350,9 +367,9 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	case AE_TERMINATE_BGAPP:
 		if (ui->state == AS_PAUSED) {
 			_DBG("[APP %d] is paused. TERMINATE", _pid);
-                        ui->state = AS_DYING;
+			ui->state = AS_DYING;
 			aul_status_update(STATUS_DYING);
-                        elm_exit();
+			elm_exit();
 		} else if (ui->state == AS_RUNNING) {
 			_DBG("[APP %d] is running.", _pid);
 		} else {
@@ -370,20 +387,20 @@ static struct ui_ops efl_ops = {
 	.cb_app = __do_app,
 };
 
-
 static bool __check_visible(void)
 {
 	GSList *iter = NULL;
 	struct win_node *entry = NULL;
 
 	_DBG("[EVENT_TEST][EVENT] __check_visible\n");
-	
+
 	for (iter = g_winnode_list; iter != NULL; iter = g_slist_next(iter)) {
-		entry = iter->data;	
+		entry = iter->data;
 		_DBG("win : %x obscured : %d\n", entry->win, entry->bfobscured);
-		if(entry->bfobscured == FALSE)
-			return TRUE;		
+		if (entry->bfobscured == FALSE)
+			return TRUE;
 	}
+
 	return FALSE;
 }
 
@@ -558,8 +575,7 @@ static int __check_wm_rotation_support(void)
 			_WM_WINDOW_ROTATION_SUPPORTED,
 			ECORE_X_ATOM_WINDOW,
 			&win, 1);
-	if ((ret == 1) && (win))
-	{
+	if ((ret == 1) && (win)) {
 		ret = ecore_x_window_prop_xid_get(win,
 				_WM_WINDOW_ROTATION_SUPPORTED,
 				ECORE_X_ATOM_WINDOW,
@@ -576,7 +592,7 @@ static void __set_wm_rotation_support(unsigned int win, unsigned int set)
 	GSList *iter = NULL;
 	struct win_node *entry = NULL;
 
-	if (0 == win) {
+	if (win == 0) {
 		for (iter = g_winnode_list; iter != NULL; iter = g_slist_next(iter)) {
 			entry = iter->data;
 			if (entry->win) {
@@ -596,13 +612,12 @@ static void __set_wm_rotation_support(unsigned int win, unsigned int set)
 
 static Eina_Bool __show_cb(void *data, int type, void *event)
 {
-#ifdef WAYLAND
+#if defined(WAYLAND)
 	Ecore_Wl_Event_Window_Show *ev;
 
 	ev = event;
-	if (ev->parent_win != 0)
-	{
-		// This is child window. Skip!!!
+	if (ev->parent_win != 0) {
+		/* This is child window. Skip!!! */
 		return ECORE_CALLBACK_PASS_ON;
 	}
 
@@ -613,7 +628,7 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 	else
 		__update_win((unsigned int)ev->win, (unsigned int)ev->data[0], FALSE);
 
-#else
+#elif defined(X11)
 	Ecore_X_Event_Window_Show *ev;
 	int ret;
 	Ecore_X_Window parent;
@@ -624,13 +639,12 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 
 	if (!__find_win((unsigned int)ev->win)) {
 		/* WM_ROTATE */
-		if ((priv.wm_rot_supported) && (1 == priv.rot_started)) {
+		if ((priv.wm_rot_supported) && (1 == priv.rot_started))
 			__set_wm_rotation_support(ev->win, 1);
-		}
 		__add_win((unsigned int)ev->win);
-	}
-	else
+	} else {
 		__update_win((unsigned int)ev->win, FALSE);
+	}
 #endif
 
 	return ECORE_CALLBACK_RENEW;
@@ -638,9 +652,9 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 
 static Eina_Bool __hide_cb(void *data, int type, void *event)
 {
-#ifdef WAYLAND
+#if defined(WAYLAND)
 	Ecore_Wl_Event_Window_Hide *ev;
-#else
+#elif defined(X11)
 	Ecore_X_Event_Window_Hide *ev;
 #endif
 	int bvisibility = 0;
@@ -664,12 +678,12 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 
 static Eina_Bool __visibility_cb(void *data, int type, void *event)
 {
-#ifdef WAYLAND
+#if defined(WAYLAND)
 	Ecore_Wl_Event_Window_Visibility_Change *ev;
 	int bvisibility = 0;
 	ev = event;
 	__update_win((unsigned int)ev->win, 0, ev->fully_obscured);
-#else
+#elif defined(X11)
 	Ecore_X_Event_Window_Visibility_Change *ev;
 	int bvisibility = 0;
 
@@ -704,30 +718,42 @@ static Eina_Bool __cmsg_cb(void *data, int type, void *event)
 	struct ui_priv *ui = (struct ui_priv *)data;
 	Ecore_X_Event_Client_Message *e = event;
 
-	if (!ui) return ECORE_CALLBACK_PASS_ON;
-	if (e->format != 32) return ECORE_CALLBACK_PASS_ON;
+	if (!ui)
+		return ECORE_CALLBACK_PASS_ON;
+
+	if (e->format != 32)
+		return ECORE_CALLBACK_PASS_ON;
+
 	if (e->message_type == _WM_WINDOW_ROTATION_CHANGE_REQUEST) {
-		if ((0 == ui->wm_rot_supported) ||
-			(0 == ui->rot_started) ||
-			(NULL == ui->rot_cb)) {
+		if ((ui->wm_rot_supported == 0)
+			|| (ui->rot_started == 0)
+			|| (ui->rot_cb == NULL)) {
 			return ECORE_CALLBACK_PASS_ON;
 		}
 
 		enum appcore_rm rm;
-		switch (e->data.l[1])
-		{
-			case   0: rm = APPCORE_RM_PORTRAIT_NORMAL;   break;
-			case  90: rm = APPCORE_RM_LANDSCAPE_REVERSE; break;
-			case 180: rm = APPCORE_RM_PORTRAIT_REVERSE;  break;
-			case 270: rm = APPCORE_RM_LANDSCAPE_NORMAL;  break;
-			default:  rm = APPCORE_RM_UNKNOWN;           break;
+		switch (e->data.l[1]) {
+		case 0:
+			rm = APPCORE_RM_PORTRAIT_NORMAL;
+			break;
+		case 90:
+			rm = APPCORE_RM_LANDSCAPE_REVERSE;
+			break;
+		case 180:
+			rm = APPCORE_RM_PORTRAIT_REVERSE;
+			break;
+		case 270:
+			rm = APPCORE_RM_LANDSCAPE_NORMAL;
+			break;
+		default:
+			rm = APPCORE_RM_UNKNOWN;
+			break;
 		}
 
 		ui->rot_mode = rm;
 
-		if (APPCORE_RM_UNKNOWN != rm) {
+		if (APPCORE_RM_UNKNOWN != rm)
 			ui->rot_cb((void *)&rm, rm, ui->rot_cb_data);
-		}
 	}
 
 	return ECORE_CALLBACK_PASS_ON;
@@ -737,7 +763,7 @@ static Eina_Bool __cmsg_cb(void *data, int type, void *event)
 static void __add_climsg_cb(struct ui_priv *ui)
 {
 	_ret_if(ui == NULL);
-#ifdef WAYLAND
+#if defined(WAYLAND)
 	ui->hshow =
 	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_SHOW, __show_cb, ui);
 	ui->hhide =
@@ -745,7 +771,7 @@ static void __add_climsg_cb(struct ui_priv *ui)
 	ui->hvchange =
 	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_VISIBILITY_CHANGE,
 				    __visibility_cb, ui);
-#else
+#elif defined(X11)
 	ui->hshow =
 	    ecore_event_handler_add(ECORE_X_EVENT_WINDOW_SHOW, __show_cb, ui);
 	ui->hhide =
@@ -755,10 +781,9 @@ static void __add_climsg_cb(struct ui_priv *ui)
 				    __visibility_cb, ui);
 
 	/* Add client message callback for WM_ROTATE */
-	if(!__check_wm_rotation_support())
-	{
-		ui->hcmsg =
-			ecore_event_handler_add(ECORE_X_EVENT_CLIENT_MESSAGE, __cmsg_cb, ui);
+	if (!__check_wm_rotation_support()) {
+		ui->hcmsg = ecore_event_handler_add(ECORE_X_EVENT_CLIENT_MESSAGE,
+						__cmsg_cb, ui);
 		ui->wm_rot_supported = 1;
 		appcore_set_wm_rotation(&wm_rotate);
 	}
@@ -776,26 +801,27 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 		return -1;
 	}
 
+#if !(GLIB_CHECK_VERSION(2, 36, 0))
 	g_type_init();
+#endif
 	elm_init(*argc, *argv);
 
 	hwacc = getenv("HWACC");
-
-	if(hwacc == NULL) {
+	if (hwacc == NULL) {
 		_DBG("elm_config_preferred_engine_set is not called");
-	} else if(strcmp(hwacc, "USE") == 0) {
-#ifdef WAYLAND
+	} else if (strcmp(hwacc, "USE") == 0) {
+#if defined(WAYLAND)
 		elm_config_preferred_engine_set("wayland_egl");
 		_DBG("elm_config_preferred_engine_set : wayland_egl");
-#else
+#elif defined(X11)
 		elm_config_preferred_engine_set("opengl_x11");
 		_DBG("elm_config_preferred_engine_set : opengl_x11");
 #endif
-	} else if(strcmp(hwacc, "NOT_USE") == 0) {
-#ifdef WAYLAND
+	} else if (strcmp(hwacc, "NOT_USE") == 0) {
+#if defined(WAYLAND)
 		elm_config_preferred_engine_set("wayland_shm");
 		_DBG("elm_config_preferred_engine_set : wayland_shm");
-#else
+#elif defined(X11)
 		elm_config_preferred_engine_set("software_x11");
 		_DBG("elm_config_preferred_engine_set : software_x11");
 #endif
@@ -880,9 +906,7 @@ static int __set_data(struct ui_priv *ui, const char *name,
 	_retv_if(ui->name == NULL, -1);
 
 	ui->ops = ops;
-
 	ui->mfcb = __appcore_efl_memory_flush_cb;
-
 	_pid = getpid();
 
 	/* WM_ROTATE */
@@ -911,9 +935,8 @@ static int __wm_set_rotation_cb(int (*cb) (void *event_info, enum appcore_rm, vo
 		return -1;
 	}
 
-	if ((priv.wm_rot_supported) && (0 == priv.rot_started)) {
+	if ((priv.wm_rot_supported) && (0 == priv.rot_started))
 		__set_wm_rotation_support(0, 1);
-	}
 
 	priv.rot_cb = cb;
 	priv.rot_cb_data = data;
@@ -924,9 +947,8 @@ static int __wm_set_rotation_cb(int (*cb) (void *event_info, enum appcore_rm, vo
 
 static int __wm_unset_rotation_cb(void)
 {
-	if ((priv.wm_rot_supported) && (1 == priv.rot_started)) {
+	if ((priv.wm_rot_supported) && (1 == priv.rot_started))
 		__set_wm_rotation_support(0, 0);
-	}
 
 	priv.rot_cb = NULL;
 	priv.rot_cb_data = NULL;
@@ -949,9 +971,8 @@ static int __wm_get_rotation_state(enum appcore_rm *curr)
 
 static int __wm_pause_rotation_cb(void)
 {
-	if ((1 == priv.rot_started) && (priv.wm_rot_supported)) {
+	if ((priv.rot_started == 1) && (priv.wm_rot_supported))
 		__set_wm_rotation_support(0, 0);
-	}
 
 	priv.rot_started = 0;
 
@@ -960,9 +981,8 @@ static int __wm_pause_rotation_cb(void)
 
 static int __wm_resume_rotation_cb(void)
 {
-	if ((0 == priv.rot_started) && (priv.wm_rot_supported)) {
+	if ((priv.rot_started == 0) && (priv.wm_rot_supported))
 		__set_wm_rotation_support(0, 1);
-	}
 
 	priv.rot_started = 1;
 
@@ -1028,6 +1048,7 @@ EXPORT_API unsigned int appcore_get_main_window()
 		entry = g_winnode_list->data;
 		return (unsigned int) entry->win;
 	}
+
 	return 0;
 }
 #ifdef WAYLAND
@@ -1039,6 +1060,7 @@ EXPORT_API unsigned int appcore_get_main_surface()
 		entry = g_winnode_list->data;
 		return (unsigned int) entry->surf;
 	}
+
 	return 0;
 }
 #endif

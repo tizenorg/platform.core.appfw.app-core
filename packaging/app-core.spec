@@ -91,7 +91,7 @@ Application basics template
 
 
 %prep
-%setup -q 
+%setup -q
 cp %{SOURCE1001} .
 
 
