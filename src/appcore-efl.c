@@ -418,7 +418,7 @@ static GSList *__find_win(unsigned int win)
 	return NULL;
 }
 
-#ifdef X11
+#if defined(X11)
 static bool __add_win(unsigned int win)
 {
 	struct win_node *t;
@@ -444,7 +444,7 @@ static bool __add_win(unsigned int win)
 
 	return TRUE;
 }
-#else
+#elif defined(WAYLAND)
 static bool __add_win(unsigned int win, unsigned int surf)
 {
 	struct win_node *t;
@@ -491,7 +491,7 @@ static bool __delete_win(unsigned int win)
 	return TRUE;
 }
 
-#ifdef X11
+#if defined(X11)
 static bool __update_win(unsigned int win, bool bfobscured)
 {
 	GSList *f;
@@ -517,7 +517,7 @@ static bool __update_win(unsigned int win, bool bfobscured)
 
 	return TRUE;
 }
-#else
+#elif defined(WAYLAND)
 static bool __update_win(unsigned int win, unsigned int surf, bool bfobscured)
 {
 	GSList *f;
@@ -607,7 +607,6 @@ static void __set_wm_rotation_support(unsigned int win, unsigned int set)
 				&set, 1);
 	}
 }
-
 #endif
 
 static Eina_Bool __show_cb(void *data, int type, void *event)
@@ -808,25 +807,15 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 
 	hwacc = getenv("HWACC");
 	if (hwacc == NULL) {
-		_DBG("elm_config_preferred_engine_set is not called");
+		_DBG("elm_config_accel_preference_set is not called");
 	} else if (strcmp(hwacc, "USE") == 0) {
-#if defined(WAYLAND)
-		elm_config_preferred_engine_set("wayland_egl");
-		_DBG("elm_config_preferred_engine_set : wayland_egl");
-#elif defined(X11)
-		elm_config_preferred_engine_set("opengl_x11");
-		_DBG("elm_config_preferred_engine_set : opengl_x11");
-#endif
+		elm_config_accel_preference_set("hw");
+		_DBG("elm_config_accel_preference_set : hw");
 	} else if (strcmp(hwacc, "NOT_USE") == 0) {
-#if defined(WAYLAND)
-		elm_config_preferred_engine_set("wayland_shm");
-		_DBG("elm_config_preferred_engine_set : wayland_shm");
-#elif defined(X11)
-		elm_config_preferred_engine_set("software_x11");
-		_DBG("elm_config_preferred_engine_set : software_x11");
-#endif
+		elm_config_accel_preference_set("none");
+		_DBG("elm_config_accel_preference_set : none");
 	} else {
-		_DBG("elm_config_preferred_engine_set is not called");
+		_DBG("elm_config_accel_preference_set is not called");
 	}
 
 	r = appcore_init(ui->name, &efl_ops, *argc, *argv);
@@ -1040,7 +1029,7 @@ EXPORT_API int appcore_set_app_state(int state)
 	return 0;
 }
 
-EXPORT_API unsigned int appcore_get_main_window()
+EXPORT_API unsigned int appcore_get_main_window(void)
 {
 	struct win_node *entry = NULL;
 
@@ -1051,8 +1040,9 @@ EXPORT_API unsigned int appcore_get_main_window()
 
 	return 0;
 }
+
 #ifdef WAYLAND
-EXPORT_API unsigned int appcore_get_main_surface()
+EXPORT_API unsigned int appcore_get_main_surface(void)
 {
 	struct win_node *entry = NULL;
 
