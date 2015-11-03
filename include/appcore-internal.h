@@ -182,8 +182,8 @@ struct ui_wm_rotate {
 };
 int appcore_set_wm_rotation(struct ui_wm_rotate* wm_rotate);
 
-void appcore_group_reset(bundle *b);
-void appcore_group_resume();
+void appcore_group_attach();
+void appcore_group_lower();
 unsigned int appcore_get_main_window(void);
 
 #define ENV_START "APP_START_TIME"
