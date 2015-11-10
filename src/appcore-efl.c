@@ -986,8 +986,8 @@ static struct ui_wm_rotate wm_rotate = {
 	__wm_resume_rotation_cb
 };
 
-EXPORT_API int appcore_efl_main(const char *name, int *argc, char ***argv,
-				struct appcore_ops *ops)
+EXPORT_API int appcore_efl_init(const char *name, int *argc, char ***argv,
+		     struct appcore_ops *ops)
 {
 	int r;
 
@@ -1002,13 +1002,29 @@ EXPORT_API int appcore_efl_main(const char *name, int *argc, char ***argv,
 		return -1;
 	}
 
-	elm_run();
+	return 0;
+}
 
+EXPORT_API void appcore_efl_fini(void)
+{
 	aul_status_update(STATUS_DYING);
 
 	__after_loop(&priv);
 
 	__unset_data(&priv);
+}
+
+EXPORT_API int appcore_efl_main(const char *name, int *argc, char ***argv,
+				struct appcore_ops *ops)
+{
+	int r;
+
+	r = appcore_efl_init(name, argc, argv, ops);
+	_retv_if(r == -1, -1);
+
+	elm_run();
+
+	appcore_efl_fini();
 
 	return 0;
 }
