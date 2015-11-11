@@ -71,6 +71,9 @@ struct ui_priv {
 	Ecore_Event_Handler *hshow;
 	Ecore_Event_Handler *hhide;
 	Ecore_Event_Handler *hvchange;
+#if defined(WAYLAND)
+	Ecore_Event_Handler *hlower;
+#endif
 	Ecore_Event_Handler *hcmsg; /* WM_ROTATE */
 
 	Ecore_Timer *mftimer; /* Ecore Timer for memory flushing */
@@ -113,7 +116,7 @@ static bool first_launch = TRUE;
 
 struct win_node {
 	unsigned int win;
-#ifdef WAYLAND
+#if defined(WAYLAND)
 	unsigned int surf;
 #endif
 	bool bfobscured;
@@ -214,7 +217,7 @@ static void __appcore_efl_memory_flush_cb(void)
 	_DBG("[APP %d]   __appcore_efl_memory_flush_cb()", _pid);
 	elm_cache_all_flush();
 }
-#ifdef WAYLAND
+#if defined(WAYLAND)
 static void wl_raise_win(void)
 {
 	Ecore_Wl_Window *win;
@@ -344,11 +347,8 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 			_DBG("[APP %d] RESUME", _pid);
 
 			if (ui->state == AS_CREATED) {
-				appcore_group_reset(ui->pending_data);
 				bundle_free(ui->pending_data);
 				ui->pending_data = NULL;
-			} else {
-				appcore_group_resume();
 			}
 
 			if (ui->ops->resume)
@@ -646,6 +646,7 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 	}
 #endif
 
+	appcore_group_attach();
 	return ECORE_CALLBACK_RENEW;
 }
 
@@ -674,6 +675,18 @@ static Eina_Bool __hide_cb(void *data, int type, void *event)
 
 	return ECORE_CALLBACK_RENEW;
 }
+
+#if defined(WAYLAND)
+static Eina_Bool __lower_cb(void *data, int type, void *event)
+{
+	Ecore_Wl_Event_Window_Lower *ev;
+	ev = event;
+	if (!ev) return ECORE_CALLBACK_RENEW;
+	_DBG("ECORE_WL_EVENT_WINDOW_LOWER window id:%u\n", ev->win);
+	appcore_group_lower();
+	return ECORE_CALLBACK_RENEW;
+}
+#endif
 
 static Eina_Bool __visibility_cb(void *data, int type, void *event)
 {
@@ -764,25 +777,28 @@ static void __add_climsg_cb(struct ui_priv *ui)
 	_ret_if(ui == NULL);
 #if defined(WAYLAND)
 	ui->hshow =
-	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_SHOW, __show_cb, ui);
+		ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_SHOW, __show_cb, ui);
 	ui->hhide =
-	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_HIDE, __hide_cb, ui);
+		ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_HIDE, __hide_cb, ui);
 	ui->hvchange =
-	    ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_VISIBILITY_CHANGE,
-				    __visibility_cb, ui);
+		ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_VISIBILITY_CHANGE,
+				__visibility_cb, ui);
+	ui->hlower =
+		ecore_event_handler_add(ECORE_WL_EVENT_WINDOW_LOWER,
+				__lower_cb, ui);
 #elif defined(X11)
 	ui->hshow =
-	    ecore_event_handler_add(ECORE_X_EVENT_WINDOW_SHOW, __show_cb, ui);
+		ecore_event_handler_add(ECORE_X_EVENT_WINDOW_SHOW, __show_cb, ui);
 	ui->hhide =
-	    ecore_event_handler_add(ECORE_X_EVENT_WINDOW_HIDE, __hide_cb, ui);
+		ecore_event_handler_add(ECORE_X_EVENT_WINDOW_HIDE, __hide_cb, ui);
 	ui->hvchange =
-	    ecore_event_handler_add(ECORE_X_EVENT_WINDOW_VISIBILITY_CHANGE,
-				    __visibility_cb, ui);
+		ecore_event_handler_add(ECORE_X_EVENT_WINDOW_VISIBILITY_CHANGE,
+				__visibility_cb, ui);
 
 	/* Add client message callback for WM_ROTATE */
 	if (!__check_wm_rotation_support()) {
 		ui->hcmsg = ecore_event_handler_add(ECORE_X_EVENT_CLIENT_MESSAGE,
-						__cmsg_cb, ui);
+				__cmsg_cb, ui);
 		ui->wm_rot_supported = 1;
 		appcore_set_wm_rotation(&wm_rotate);
 	}
@@ -864,6 +880,10 @@ static void __after_loop(struct ui_priv *ui)
 		ecore_event_handler_del(ui->hhide);
 	if (ui->hvchange)
 		ecore_event_handler_del(ui->hvchange);
+#if defined(WAYLAND)
+	if (ui->hlower)
+		ecore_event_handler_del(ui->hlower);
+#endif
 
 	__appcore_timer_del(ui);
 
@@ -1057,7 +1077,7 @@ EXPORT_API unsigned int appcore_get_main_window(void)
 	return 0;
 }
 
-#ifdef WAYLAND
+#if defined(WAYLAND)
 EXPORT_API unsigned int appcore_get_main_surface(void)
 {
 	struct win_node *entry = NULL;
