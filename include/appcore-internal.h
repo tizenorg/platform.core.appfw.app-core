@@ -27,6 +27,7 @@
 #define LOG_TAG "APP_CORE"
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <dlog.h>
 #include "appcore-common.h"
 
@@ -128,6 +129,7 @@ enum sys_event {
 	SE_LOWBAT,
 	SE_LANGCHG,
 	SE_REGIONCHG,
+	SE_SUSPENDED_STATE,
 	SE_MAX
 };
 
@@ -144,6 +146,9 @@ struct sys_op {
  */
 struct appcore {
 	int state;
+	unsigned int tid;
+	bool suspended_state;
+	bool allowed_bg;
 
 	const struct ui_ops *ops;
 	struct sys_op sops[SE_MAX];
@@ -185,6 +190,10 @@ int appcore_set_wm_rotation(struct ui_wm_rotate* wm_rotate);
 void appcore_group_attach();
 void appcore_group_lower();
 unsigned int appcore_get_main_window(void);
+void appcore_get_app_core(struct appcore **ac);
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+int _appcore_init_suspend_dbus_handler(void *data);
+#endif
 
 #define ENV_START "APP_START_TIME"
 

@@ -74,6 +74,8 @@ enum appcore_event {
 			   /**< Language setting is changed */
 	APPCORE_EVENT_REGION_CHANGE,
 			     /**< Region setting is changed */
+	APPCORE_EVENT_SUSPENDED_STATE_CHANGE,
+				/**< The suspended state is changed */
 };
 
 /**
@@ -101,6 +103,11 @@ enum appcore_time_format {
 	APPCORE_TIME_FORMAT_UNKNOWN,
 	APPCORE_TIME_FORMAT_12,
 	APPCORE_TIME_FORMAT_24,
+};
+
+enum appcore_suspended_state {
+	APPCORE_SUSPENDED_STATE_WILL_ENTER_SUSPEND = 0,
+	APPCORE_SUSPENDED_STATE_DID_EXIT_FROM_SUSPEND
 };
 
 /**
