@@ -18,7 +18,7 @@ BuildRequires:  pkgconfig(ecore-wayland)
 %endif
 %endif
 Source1001:     app-core.manifest
-BuildRequires:  pkgconfig(dbus-1)
+BuildRequires:  pkgconfig(dbus-glib-1)
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(aul)
@@ -89,22 +89,38 @@ Group:      Development/Libraries
 %description template
 Application basics template
 
+%if "%{?tizen_profile_name}" == "wearable"
+%define appfw_feature_background_management 1
+%else
+%if "%{?tizen_profile_name}" == "mobile"
+%define appfw_feature_background_management 1
+%else
+%if "%{?tizen_profile_name}" == "tv"
+%define appfw_feature_background_management 0
+%endif
+%endif
+%endif
 
 %prep
 %setup -q
 cp %{SOURCE1001} .
 
-
 %build
-
-%cmake . \
 %if %{with wayland}
--Dwith_wayland=TRUE\
+_WITH_WAYLAND=ON
 %endif
 %if %{with x}
--Dwith_x11=TRUE\
+_WITH_X11=ON
 %endif
--DENABLE_GTK=OFF
+%if 0%{?appfw_feature_background_management}
+_APPFW_FEATURE_BACKGROUND_MANAGEMENT=ON
+%endif
+
+%cmake . \
+	-D_WITH_WAYLAND:BOOL=${_WITH_WAYLAND} \
+	-D_WITH_X11:BOOL=${_WITH_X11} \
+	-D_APPFW_FEATURE_BACKGROUND_MANAGEMENT:BOOL=${_APPFW_FEATURE_BACKGROUND_MANAGEMENT} \
+	-DENABLE_GTK=OFF
 
 make %{?_smp_mflags}
 

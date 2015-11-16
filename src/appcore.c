@@ -38,6 +38,15 @@
 #include <tzplatform_config.h>
 #include "appcore-internal.h"
 
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+#include <dbus/dbus.h>
+#include <dbus/dbus-glib-lowlevel.h>
+
+#define RESOURCED_FREEZER_PATH "/Org/Tizen/Resourced/Freezer"
+#define RESOURCED_FREEZER_INTERFACE "org.tizen.resourced.freezer"
+#define RESOURCED_FREEZER_SIGNAL "FreezerState"
+#endif
+
 #define SQLITE_FLUSH_MAX		(1024*1024)
 
 #define PKGNAME_MAX 256
@@ -133,6 +142,11 @@ static struct evt_ops evtops[] = {
 	 .vcb = __sys_regionchg,
 	 },
 };
+
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+static DBusConnection *bus = NULL;
+static int __suspend_dbus_handler_initialized = 0;
+#endif
 
 static int __get_dir_name(char *dirname)
 {
@@ -421,18 +435,76 @@ static int __del_vconf(void)
 	return 0;
 }
 
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+static gboolean __flush_memory(gpointer data)
+{
+	int suspend = APPCORE_SUSPENDED_STATE_WILL_ENTER_SUSPEND;
+	struct appcore *ac = (struct appcore *)data;
+
+	appcore_flush_memory();
+
+	if (!ac) {
+		return FALSE;
+	}
+	ac->tid = 0;
+
+	if (!ac->allowed_bg && !ac->suspended_state) {
+		_DBG("[__SUSPEND__] flush case");
+		__sys_do(ac, &suspend, SE_SUSPENDED_STATE);
+		ac->suspended_state = true;
+	}
+
+	return FALSE;
+}
+
+static void __add_suspend_timer(struct appcore *ac)
+{
+	ac->tid = g_timeout_add_seconds(5, __flush_memory, ac);
+}
+
+static void __remove_suspend_timer(struct appcore *ac)
+{
+	if (ac->tid > 0) {
+		g_source_remove(ac->tid);
+		ac->tid = 0;
+	}
+}
+#endif
+
 static int __aul_handler(aul_type type, bundle *b, void *data)
 {
 	int ret;
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+	const char *bg = NULL;
+	struct appcore *ac = data;
+#endif
 
 	switch (type) {
 	case AUL_START:
 		_DBG("[APP %d]     AUL event: AUL_START", _pid);
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+		bg = bundle_get_val(b, AUL_K_ALLOWED_BG);
+		if (bg && strncmp(bg, "ALLOWED_BG", strlen("ALLOWGED_BG")) == 0) {
+			_DBG("[__SUSPEND__] allowed background");
+                        ac->allowed_bg = true;
+                        __remove_suspend_timer(data);
+		}
+#endif
+
 		__app_reset(data, b);
 		break;
 	case AUL_RESUME:
 		_DBG("[APP %d]     AUL event: AUL_RESUME", _pid);
-		if(open.callback) {
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+		bg = bundle_get_val(b, AUL_K_ALLOWED_BG);
+		if (bg && strncmp(bg, "ALLOWED_BG", strlen("ALLOWED_BG")) == 0) {
+			_DBG("[__SUSPEND__] allowed background");
+			ac->allowed_bg = true;
+			__remove_suspend_timer(data);
+		}
+#endif
+
+		if (open.callback) {
 			ret = open.callback(open.cbdata);
 			if (ret == 0)
 				__app_resume(data);
@@ -442,16 +514,44 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 		break;
 	case AUL_TERMINATE:
 		_DBG("[APP %d]     AUL event: AUL_TERMINATE", _pid);
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+		if (!ac->allowed_bg)
+			__remove_suspend_timer(data);
+#endif
+
 		__app_terminate(data);
 		break;
 	case AUL_TERMINATE_BGAPP:
 		_DBG("[APP %d]     AUL event: AUL_TERMINATE_BGAPP", _pid);
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+		if (!ac->allowed_bg)
+			__remove_suspend_timer(data);
+#endif
+
 		__bgapp_terminate(data);
 		break;
 	case AUL_PAUSE:
 		_DBG("[APP %d]	   AUL event: AUL_PAUSE", _pid);
 		__app_pause(data);
 		break;
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+	case AUL_WAKE:
+		_DBG("[APP %d]     AUL event: AUL_WAKE", _pid);
+		if (!ac->allowed_bg && ac->suspended_state) {
+			int suspend = APPCORE_SUSPENDED_STATE_DID_EXIT_FROM_SUSPEND;
+			__remove_suspend_timer(data);
+			__sys_do(ac, &suspend, SE_SUSPENDED_STATE);
+			ac->suspended_state = false;
+		}
+		break;
+	case AUL_SUSPEND:
+		_DBG("[APP %d]     AUL event: AUL_SUSPEND", _pid);
+		if (!ac->allowed_bg && !ac->suspended_state) {
+			__remove_suspend_timer(data);
+			__flush_memory((gpointer)ac);
+		}
+		break;
+#endif
 	default:
 		_DBG("[APP %d]     AUL event: %d", _pid, type);
 		/* do nothing */
@@ -465,6 +565,11 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 static void __clear(struct appcore *ac)
 {
 	memset(ac, 0, sizeof(struct appcore));
+}
+
+void appcore_get_app_core(struct appcore **ac)
+{
+	*ac = &core;
 }
 
 EXPORT_API int appcore_set_open_cb(int (*cb) (void *),
@@ -526,6 +631,14 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 	r = set_i18n(name, dirname);
 	_retv_if(r == -1, -1);
 
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+	r = _appcore_init_suspend_dbus_handler(&core);
+	if (r == -1) {
+		_ERR("Initailzing suspended state handler failed");
+		goto err;
+	}
+#endif
+
 	r = __add_vconf(&core);
 	if (r == -1) {
 		_ERR("Add vconf callback failed");
@@ -546,6 +659,9 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 
 	core.ops = ops;
 	core.state = 1;		/* TODO: use enum value */
+	core.tid = 0;
+	core.suspended_state = false;
+	core.allowed_bg = false;
 
 	_pid = getpid();
 
@@ -561,6 +677,9 @@ EXPORT_API void appcore_exit(void)
 	if (core.state) {
 		__del_vconf();
 		__clear(&core);
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+		__remove_suspend_timer(&core);
+#endif
 	}
 	aul_finalize();
 }
@@ -598,3 +717,92 @@ EXPORT_API int appcore_flush_memory(void)
 
 	return 0;
 }
+
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+static DBusHandlerResult __suspend_dbus_signal_filter(DBusConnection *conn,
+					DBusMessage *message, void *user_data)
+{
+	const char *sender;
+	const char *interface;
+	int pid;
+	int state;
+	int suspend;
+
+	DBusError error;
+	dbus_error_init(&error);
+
+	sender = dbus_message_get_sender(message);
+	if (sender == NULL)
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
+	interface = dbus_message_get_interface(message);
+	if (interface == NULL) {
+		_ERR("reject by security issue - no interface\n");
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	}
+
+	if (dbus_message_is_signal(message, interface, RESOURCED_FREEZER_SIGNAL)) {
+		if (dbus_message_get_args(message, &error, DBUS_TYPE_INT32, &state,
+					DBUS_TYPE_INT32, &pid, DBUS_TYPE_INVALID) == FALSE) {
+			_ERR("Failed to get data: %s", error.message);
+			dbus_error_free(&error);
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		}
+
+		if (pid == getpid() && state == 0) { //thawed
+			suspend = APPCORE_SUSPENDED_STATE_DID_EXIT_FROM_SUSPEND;
+			SECURE_LOGD("[__SUSPEND__] state: %d (0: thawed, 1: frozen), pid: %d", state, pid);
+
+			struct appcore *ac = (struct appcore *)user_data;
+			if (!ac->allowed_bg && ac->suspended_state) {
+				__remove_suspend_timer(ac);
+				__sys_do(user_data, &suspend, SE_SUSPENDED_STATE);
+				ac->suspended_state = false;
+				__add_suspend_timer(ac);
+			}
+		}
+	}
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+int _appcore_init_suspend_dbus_handler(void *data)
+{
+	DBusError error;
+	char rule[MAX_LOCAL_BUFSZ];
+
+	if (__suspend_dbus_handler_initialized)
+		return 0;
+
+	dbus_error_init(&error);
+	if (!bus) {
+		bus = dbus_bus_get_private(DBUS_BUS_SYSTEM, &error);
+		if (!bus) {
+			_ERR("Failed to connect to the D-BUS daemon: %s", error.message);
+			dbus_error_free(&error);
+			return -1;
+		}
+	}
+	dbus_connection_setup_with_g_main(bus, NULL);
+
+	snprintf(rule, MAX_LOCAL_BUFSZ,
+			"path='%s',type='signal',interface='%s'", RESOURCED_FREEZER_PATH, RESOURCED_FREEZER_INTERFACE);
+	/* listening to messages */
+	dbus_bus_add_match(bus, rule, &error);
+	if (dbus_error_is_set(&error)) {
+		_ERR("Fail to rule set: %s", error.message);
+		dbus_error_free(&error);
+		return -1;
+	}
+
+	if (dbus_connection_add_filter(bus, __suspend_dbus_signal_filter, data, NULL) == FALSE) {
+		_ERR("add filter fail");
+		return -1;
+	}
+
+	__suspend_dbus_handler_initialized = 1;
+	_DBG("[__SUSPEND__] suspend signal initialized");
+
+	return 0;
+}
+#endif
