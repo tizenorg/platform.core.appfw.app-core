@@ -1147,6 +1147,35 @@ EXPORT_API int appcore_set_app_state(int state)
 	return 0;
 }
 
+EXPORT_API int appcore_set_preinit_window_name(const char *win_name)
+{
+	int ret = -1;
+	void *preinit_window = NULL;
+	const Evas *e = NULL;
+
+	if (!win_name) {
+		_ERR("invalid parameter");
+		return ret;
+	}
+
+	preinit_window = aul_get_preinit_window(win_name);
+	if (!preinit_window) {
+		_ERR("Failed to get preinit window");
+		return ret;
+	}
+
+	e = evas_object_evas_get((const Evas_Object *)preinit_window);
+	if (e) {
+		Ecore_Evas *ee = ecore_evas_ecore_evas_get(e);
+		if (ee) {
+			ecore_evas_name_class_set(ee, win_name, win_name);
+			ret = 0;
+		}
+	}
+
+	return ret;
+}
+
 EXPORT_API unsigned int appcore_get_main_window(void)
 {
 	struct win_node *entry = NULL;

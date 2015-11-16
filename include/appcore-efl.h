@@ -164,6 +164,8 @@ int _create(void *data)
  */
 int appcore_set_system_resource_reclaiming(bool enable);
 
+int appcore_set_preinit_window_name(const char *win_name);
+
 #ifdef __cplusplus
 }
 #endif
