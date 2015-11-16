@@ -78,6 +78,11 @@ struct ui_priv {
 
 	Ecore_Timer *mftimer; /* Ecore Timer for memory flushing */
 
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+	struct appcore *app_core;
+	void (*prepare_to_suspend) (void *data);
+	void (*exit_from_suspend) (void *data);
+#endif
 	struct appcore_ops *ops;
 	void (*mfcb) (void); /* Memory Flushing Callback */
 
@@ -166,13 +171,55 @@ static void _send_to_resourced(enum proc_status_type type)
 
 static GSList *g_winnode_list;
 
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+static void __appcore_efl_prepare_to_suspend(void *data)
+{
+	struct ui_priv *ui = (struct ui_priv *)data;
+	struct sys_op *op = NULL;
+	int suspend = APPCORE_SUSPENDED_STATE_WILL_ENTER_SUSPEND;
+
+	if (ui->app_core && !ui->app_core->allowed_bg && !ui->app_core->suspended_state) {
+		op = &ui->app_core->sops[SE_SUSPENDED_STATE];
+		if (op && op->func)
+			op->func((void *)&suspend, op->data); /* calls c-api handler */
+
+		ui->app_core->suspended_state = true;
+	}
+	_DBG("[__SUSPEND__]");
+}
+
+static void __appcore_efl_exit_from_suspend(void *data)
+{
+	struct ui_priv *ui = (struct ui_priv *)data;
+	struct sys_op *op = NULL;
+	int suspend = APPCORE_SUSPENDED_STATE_DID_EXIT_FROM_SUSPEND;
+
+	if (ui->app_core && !ui->app_core->allowed_bg && ui->app_core->suspended_state) {
+		op = &ui->app_core->sops[SE_SUSPENDED_STATE];
+		if (op && op->func)
+			op->func((void *)&suspend, op->data); /* calls c-api handler */
+
+		ui->app_core->suspended_state = false;
+	}
+	_DBG("[__SUSPEND__]");
+}
+#endif
+
 #if defined(MEMORY_FLUSH_ACTIVATE)
 static Eina_Bool __appcore_memory_flush_cb(void *data)
 {
 	struct ui_priv *ui = (struct ui_priv *)data;
 
 	appcore_flush_memory();
-	ui->mftimer = NULL;
+	if (ui)
+		ui->mftimer = NULL;
+
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+	if (ui && ui->prepare_to_suspend) {
+		_DBG("[__SUSPEND__] flush case");
+		ui->prepare_to_suspend(ui);
+	}
+#endif
 
 	return ECORE_CALLBACK_CANCEL;
 }
@@ -309,6 +356,14 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		_DBG("[APP %d] RESET", _pid);
 		ui->pending_data = bundle_dup(b);
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:start]", ui->name);
+
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+		if (ui->exit_from_suspend) {
+			_DBG("[__SUSPEND__] reset case");
+			ui->exit_from_suspend(ui);
+		}
+#endif
+
 		if (ui->ops->reset)
 			r = ui->ops->reset(b, ui->ops->data);
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:done]", ui->name);
@@ -334,6 +389,13 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 			ui->state = AS_PAUSED;
 			if (r >= 0 && resource_reclaiming == TRUE)
 				__appcore_timer_add(ui);
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+			else if (r >= 0 && resource_reclaiming == FALSE
+					&& ui->prepare_to_suspend) {
+				_DBG("[__SUSPEND__] pause case");
+				ui->prepare_to_suspend(ui);
+			}
+#endif
 		}
 		/* TODO : rotation stop */
 		/* r = appcore_pause_rotation_cb(); */
@@ -343,6 +405,13 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	case AE_RESUME:
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:start]",
 				ui->name);
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+		if (ui->exit_from_suspend) {
+			_DBG("[__SUSPEND__] resume case");
+			ui->exit_from_suspend(ui);
+		}
+#endif
+
 		if (ui->state == AS_PAUSED || ui->state == AS_CREATED) {
 			_DBG("[APP %d] RESUME", _pid);
 
@@ -837,6 +906,12 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 	r = appcore_init(ui->name, &efl_ops, *argc, *argv);
 	_retv_if(r == -1, -1);
 
+#if _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+	appcore_get_app_core(&ac);
+        ui->app_core = ac;
+        SECURE_LOGD("[__SUSPEND__] appcore initialized, appcore addr: 0x%x", ac);
+#endif
+
 	LOG(LOG_DEBUG, "LAUNCH", "[%s:Platform:appcore_init:done]", ui->name);
 	if (ui->ops && ui->ops->create) {
 		r = ui->ops->create(ui->ops->data);
@@ -924,6 +999,12 @@ static int __set_data(struct ui_priv *ui, const char *name,
 	ui->rot_cb = NULL;
 	ui->rot_cb_data = NULL;
 	ui->rot_mode = APPCORE_RM_UNKNOWN;
+
+#ifdef  _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+	ui->app_core = NULL;
+	ui->prepare_to_suspend = __appcore_efl_prepare_to_suspend;
+	ui->exit_from_suspend = __appcore_efl_exit_from_suspend;
+#endif
 
 	return 0;
 }
