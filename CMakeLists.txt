@@ -42,12 +42,12 @@ SET(HEADERS_common appcore-common.h)
 
 INCLUDE(FindPkgConfig)
 SET(APPCORE_PKG_CHECK_MODULES "dbus-glib-1 vconf sensor aul dlog libtzplatform-config ecore")
-IF (with_x11)
+IF(_WITH_X11)
        SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} x11 eina ecore-x")
-ENDIF (with_x11)
-IF (with_wayland)
+ENDIF(_WITH_X11)
+IF(_WITH_WAYLAND)
        SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} ecore-wayland")
-ENDIF (with_wayland)
+ENDIF(_WITH_WAYLAND)
 
 
 pkg_check_modules(pkg_common REQUIRED ${APPCORE_PKG_CHECK_MODULES})
@@ -85,9 +85,9 @@ SET(HEADERS_efl appcore-efl.h)
 
 INCLUDE(FindPkgConfig)
 SET(APPCORE_PKG_CHECK_MODULES2 "elementary dlog ecore gobject-2.0 glib-2.0 aul pkgmgr-info")
-IF (with_x11)
+IF(_WITH_X11)
         SET(APPCORE_PKG_CHECK_MODULES2 "${APPCORE_PKG_CHECK_MODULES2} ecore-x")
-ENDIF (with_x11)
+ENDIF(_WITH_X11)
 
 pkg_check_modules(pkg_efl REQUIRED ${APPCORE_PKG_CHECK_MODULES2})
 

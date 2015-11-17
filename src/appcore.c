@@ -64,8 +64,10 @@ static enum appcore_event to_ae[SE_MAX] = {
 	APPCORE_EVENT_LOW_BATTERY,	/* SE_LOWBAT */
 	APPCORE_EVENT_LANG_CHANGE,	/* SE_LANGCGH */
 	APPCORE_EVENT_REGION_CHANGE,
+	APPCORE_EVENT_SUSPENDED_STATE_CHANGE,
 };
 
+static int appcore_event_initialized[SE_MAX] = {0,};
 
 enum cb_type {			/* callback */
 	_CB_NONE,
@@ -188,14 +190,14 @@ static int __app_terminate(void *data)
 
 static int __bgapp_terminate(void *data)
 {
-        struct appcore *ac = data;
+	struct appcore *ac = data;
 
-        _retv_if(ac == NULL || ac->ops == NULL, -1);
-        _retv_if(ac->ops->cb_app == NULL, 0);
+	_retv_if(ac == NULL || ac->ops == NULL, -1);
+	_retv_if(ac->ops->cb_app == NULL, 0);
 
-        ac->ops->cb_app(AE_TERMINATE_BGAPP, ac->ops->data, NULL);
+	ac->ops->cb_app(AE_TERMINATE_BGAPP, ac->ops->data, NULL);
 
-        return 0;
+	return 0;
 }
 
 static gboolean __prt_ltime(gpointer data)
@@ -392,43 +394,76 @@ static void __vconf_cb(keynode_t *key, void *data)
 	}
 }
 
-static int __add_vconf(struct appcore *ac)
+static int __add_vconf(struct appcore *ac, enum sys_event se)
 {
-	int i;
 	int r;
 
-	for (i = 0; i < sizeof(evtops) / sizeof(evtops[0]); i++) {
-		struct evt_ops *eo = &evtops[i];
+	switch (se) {
+	case SE_LOWMEM:
+		r = vconf_notify_key_changed(VCONFKEY_SYSMAN_LOW_MEMORY, __vconf_cb, ac);
+		break;
+	case SE_LOWBAT:
+		r = vconf_notify_key_changed(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, __vconf_cb, ac);
+		break;
+	case SE_LANGCHG:
+		r = vconf_notify_key_changed(VCONFKEY_LANGSET, __vconf_cb, ac);
+		break;
+	case SE_REGIONCHG:
+		r = vconf_notify_key_changed(VCONFKEY_REGIONFORMAT, __vconf_cb, ac);
+		if (r < 0)
+			break;
 
-		switch (eo->type) {
-		case _CB_VCONF:
-			r = vconf_notify_key_changed(eo->key.vkey, __vconf_cb,
-						     ac);
-			break;
-		default:
-			/* do nothing */
-			break;
-		}
+		r = vconf_notify_key_changed(VCONFKEY_REGIONFORMAT_TIME1224, __vconf_cb, ac);
+		break;
+	default:
+		r = -1;
+		break;
 	}
 
-	return 0;
+	return r;
 }
 
-static int __del_vconf(void)
+static int __del_vconf(enum sys_event se)
 {
-	int i;
 	int r;
 
-	for (i = 0; i < sizeof(evtops) / sizeof(evtops[0]); i++) {
-		struct evt_ops *eo = &evtops[i];
+	switch (se) {
+	case SE_LOWMEM:
+		r = vconf_ignore_key_changed(VCONFKEY_SYSMAN_LOW_MEMORY, __vconf_cb);
+		break;
+	case SE_LOWBAT:
+		r = vconf_ignore_key_changed(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, __vconf_cb);
+		break;
+	case SE_LANGCHG:
+		r = vconf_ignore_key_changed(VCONFKEY_LANGSET, __vconf_cb);
+		break;
+	case SE_REGIONCHG:
+		r = vconf_ignore_key_changed(VCONFKEY_REGIONFORMAT, __vconf_cb);
+		if (r < 0)
+			break;
 
-		switch (eo->type) {
-		case _CB_VCONF:
-			r = vconf_ignore_key_changed(eo->key.vkey, __vconf_cb);
-			break;
-		default:
-			/* do nothing */
-			break;
+		r = vconf_ignore_key_changed(VCONFKEY_REGIONFORMAT_TIME1224, __vconf_cb);
+		break;
+	default:
+		r = -1;
+		break;
+	}
+
+	return r;
+}
+
+static int __del_vconf_list(void)
+{
+	int r;
+	enum sys_event se;
+
+	for (se = SE_LOWMEM; se < SE_MAX; se++) {
+		if (appcore_event_initialized[se]) {
+			r = __del_vconf(se);
+			if (r < 0)
+				_ERR("Delete vconf callback failed");
+			else
+				appcore_event_initialized[se] = 0;
 		}
 	}
 
@@ -443,9 +478,9 @@ static gboolean __flush_memory(gpointer data)
 
 	appcore_flush_memory();
 
-	if (!ac) {
+	if (!ac)
 		return FALSE;
-	}
+
 	ac->tid = 0;
 
 	if (!ac->allowed_bg && !ac->suspended_state) {
@@ -486,8 +521,8 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 		bg = bundle_get_val(b, AUL_K_ALLOWED_BG);
 		if (bg && strncmp(bg, "ALLOWED_BG", strlen("ALLOWGED_BG")) == 0) {
 			_DBG("[__SUSPEND__] allowed background");
-                        ac->allowed_bg = true;
-                        __remove_suspend_timer(data);
+			ac->allowed_bg = true;
+			__remove_suspend_timer(data);
 		}
 #endif
 
@@ -587,6 +622,7 @@ EXPORT_API int appcore_set_event_callback(enum appcore_event event,
 	struct appcore *ac = &core;
 	struct sys_op *op;
 	enum sys_event se;
+	int r = 0;
 
 	for (se = SE_UNKNOWN; se < SE_MAX; se++) {
 		if (event == to_ae[se])
@@ -604,10 +640,22 @@ EXPORT_API int appcore_set_event_callback(enum appcore_event event,
 	op->func = cb;
 	op->data = data;
 
+	if (op->func && !appcore_event_initialized[se]) {
+		r = __add_vconf(ac, se);
+		if (r < 0)
+			_ERR("Add vconf callback failed");
+		else
+			appcore_event_initialized[se] = 1;
+	} else if (!op->func && appcore_event_initialized[se]) {
+		r = __del_vconf(se);
+		if (r < 0)
+			_ERR("Delete vconf callback failed");
+		else
+			appcore_event_initialized[se] = 0;
+	}
+
 	return 0;
 }
-
-
 
 EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 			    int argc, char **argv)
@@ -639,12 +687,6 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 	}
 #endif
 
-	r = __add_vconf(&core);
-	if (r == -1) {
-		_ERR("Add vconf callback failed");
-		goto err;
-	}
-
 	r = aul_launch_init(__aul_handler, &core);
 	if (r < 0) {
 		_ERR("Aul init failed: %d", r);
@@ -667,7 +709,7 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 
 	return 0;
  err:
-	__del_vconf();
+	__del_vconf_list();
 	__clear(&core);
 	return -1;
 }
@@ -675,7 +717,7 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 EXPORT_API void appcore_exit(void)
 {
 	if (core.state) {
-		__del_vconf();
+		__del_vconf_list();
 		__clear(&core);
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 		__remove_suspend_timer(&core);
@@ -687,7 +729,6 @@ EXPORT_API void appcore_exit(void)
 EXPORT_API int appcore_flush_memory(void)
 {
 	int (*flush_fn) (int);
-	int size = 0;
 
 	struct appcore *ac = &core;
 
@@ -698,14 +739,12 @@ EXPORT_API int appcore_flush_memory(void)
 
 	_DBG("[APP %d] Flushing memory ...", _pid);
 
-	if (ac->ops->cb_app) {
+	if (ac->ops->cb_app)
 		ac->ops->cb_app(AE_MEM_FLUSH, ac->ops->data, NULL);
-	}
 
 	flush_fn = dlsym(RTLD_DEFAULT, "sqlite3_release_memory");
-	if (flush_fn) {
-		size = flush_fn(SQLITE_FLUSH_MAX);
-	}
+	if (flush_fn)
+		flush_fn(SQLITE_FLUSH_MAX);
 
 	malloc_trim(0);
 	/*
@@ -749,7 +788,7 @@ static DBusHandlerResult __suspend_dbus_signal_filter(DBusConnection *conn,
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
 
-		if (pid == getpid() && state == 0) { //thawed
+		if (pid == getpid() && state == 0) { /* thawed */
 			suspend = APPCORE_SUSPENDED_STATE_DID_EXIT_FROM_SUSPEND;
 			SECURE_LOGD("[__SUSPEND__] state: %d (0: thawed, 1: frozen), pid: %d", state, pid);
 
