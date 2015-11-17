@@ -1100,6 +1100,7 @@ EXPORT_API int appcore_efl_init(const char *name, int *argc, char ***argv,
 
 	r = __before_loop(&priv, argc, argv);
 	if (r == -1) {
+		aul_status_update(STATUS_DYING);
 		__unset_data(&priv);
 		return -1;
 	}
