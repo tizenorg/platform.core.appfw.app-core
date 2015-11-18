@@ -28,7 +28,7 @@
 
 #include "appcore-internal.h"
 
-#define GETSP() ({ unsigned int sp; asm volatile ("mov %0,sp " : "=r"(sp) ); sp;})
+#define GETSP() ({ unsigned int sp; asm volatile ("mov %0,sp " : "=r"(sp)); sp; })
 #define BUF_SIZE				256
 #define PAGE_SIZE			(1 << 12)
 #define _ALIGN_UP(addr , size)    (((addr)+((size)-1))&(~((size)-1)))

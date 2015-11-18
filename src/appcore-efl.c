@@ -128,7 +128,9 @@ struct win_node {
 	bool bfobscured;
 };
 
+#if defined(X11)
 static struct ui_wm_rotate wm_rotate;
+#endif
 static Eina_Bool __visibility_cb(void *data, int type, void *event);
 
 static void _send_to_resourced(enum proc_status_type type)
@@ -699,8 +701,6 @@ static Eina_Bool __show_cb(void *data, int type, void *event)
 
 #elif defined(X11)
 	Ecore_X_Event_Window_Show *ev;
-	int ret;
-	Ecore_X_Window parent;
 
 	ev = event;
 
@@ -793,7 +793,7 @@ static Eina_Bool __visibility_cb(void *data, int type, void *event)
 
 }
 
-#ifdef X11
+#if defined(X11)
 /* WM_ROTATE */
 static Eina_Bool __cmsg_cb(void *data, int type, void *event)
 {
@@ -1018,6 +1018,7 @@ static void __unset_data(struct ui_priv *ui)
 	memset(ui, 0, sizeof(struct ui_priv));
 }
 
+#if defined(X11)
 /* WM_ROTATE */
 static int __wm_set_rotation_cb(int (*cb) (void *event_info, enum appcore_rm, void *), void *data)
 {
@@ -1087,6 +1088,7 @@ static struct ui_wm_rotate wm_rotate = {
 	__wm_pause_rotation_cb,
 	__wm_resume_rotation_cb
 };
+#endif
 
 EXPORT_API int appcore_efl_init(const char *name, int *argc, char ***argv,
 		     struct appcore_ops *ops)
