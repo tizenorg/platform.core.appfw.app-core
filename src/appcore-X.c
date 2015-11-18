@@ -106,18 +106,18 @@ static int __find_win(Display *d, Window *win, pid_t pid)
 
 static void __add_win_list(Eina_List **list, Window *win)
 {
-	Window w;
+	void *w;
 	Eina_List *l;
 
 	if (!list || !win)
 		return;
 
 	EINA_LIST_FOREACH(*list, l, w) {
-		if (w == *win)
+		if ((Window)w == *win)
 			return;
 	}
 
-	*list = eina_list_append(*list, *win);
+	*list = eina_list_append(*list, (void *)*win);
 }
 
 static void __foreach_win(Eina_List **list, Display *d, Window *win, pid_t pid)
@@ -134,23 +134,23 @@ static void __foreach_win(Eina_List **list, Display *d, Window *win, pid_t pid)
 
 	r = XQueryTree(d, *win, &root, &parent, &child, &n);
 	if (r) {
-		for (i = 0; i < n; i++) {
+		for (i = 0; i < n; i++)
 			__foreach_win(list, d, &child[i], pid);
-		}
+
 		XFree(child);
 	}
 }
 
 static int __iconify_win(Eina_List *list, Display *d)
 {
-	Window w;
+	void *w;
 	Eina_List *l;
 
 	if (!list || !d)
 		return -1;
 
 	EINA_LIST_FOREACH(list, l, w) {
-		XIconifyWindow(d, w, 0);
+		XIconifyWindow(d, (Window)w, 0);
 	}
 
 	return 0;

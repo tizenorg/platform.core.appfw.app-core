@@ -33,15 +33,15 @@
 #include <Ecore_X.h>
 #include <X11/Xlib.h>
 
-/*Fixme: to be added for wayland works*/
-#define _MAKE_ATOM(a, s)                              \
-   do {                                               \
-        a = ecore_x_atom_get(s);                      \
-        if (!a)                                       \
-          _ERR("##s creation failed.\n");             \
-   } while(0)
+/* Fixme: to be added for wayland works */
+#define _MAKE_ATOM(a, s)				\
+	do {						\
+		a = ecore_x_atom_get(s);		\
+		if (!a)					\
+			_ERR("##s creation failed.\n");	\
+	} while (0)
 
-#define STR_ATOM_ROTATION_LOCK                "_E_ROTATION_LOCK"
+#define STR_ATOM_ROTATION_LOCK "_E_ROTATION_LOCK"
 
 static Ecore_X_Atom ATOM_ROTATION_LOCK = 0;
 static Ecore_X_Window root;
@@ -106,7 +106,6 @@ static void __changed_cb(unsigned int event_type, sensor_event_data_t *event,
 {
 	int *cb_event_data;
 	enum appcore_rm m;
-	int ret;
 
 	if (rot.lock)
 		return;
@@ -135,7 +134,6 @@ static void __lock_cb(keynode_t *node, void *data)
 {
 	int r;
 	enum appcore_rm m;
-	int ret;
 
 	rot.lock = !vconf_keynode_get_bool(node);
 
@@ -170,9 +168,8 @@ static void __add_rotlock(void *data)
 
 	lock = 0;
 	r = vconf_get_bool(VCONFKEY_SETAPPL_AUTO_ROTATE_SCREEN_BOOL, &lock);
-	if (r) {
+	if (r)
 		_DBG("[APP %d] Rotation vconf get bool failed", getpid());
-	}
 
 	rot.lock = !lock;
 
@@ -189,9 +186,8 @@ static void __del_rotlock(void)
 EXPORT_API int appcore_set_rotation_cb(int (*cb) (void *evnet_info, enum appcore_rm, void *),
 				       void *data)
 {
-	if (rot.wm_rotate) {
+	if (rot.wm_rotate)
 		return rot.wm_rotate->set_rotation_cb(cb, data);
-	}
 	else {
 		int r;
 		int handle;
@@ -228,9 +224,9 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (void *evnet_info, enum appcore
 		if (r < 0) {
 			_ERR("sf_start failed: %d", r);
 			r = sf_unregister_event(handle, ACCELEROMETER_EVENT_ROTATION_CHECK);
-			if (r < 0) {
+			if (r < 0)
 				_ERR("sf_unregister_event failed: %d", r);
-			}
+
 			rot.callback = NULL;
 			rot.cbdata = NULL;
 			rot.cb_set = 0;
@@ -244,7 +240,7 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (void *evnet_info, enum appcore
 		__add_rotlock(data);
 
 #ifdef X11
-		_MAKE_ATOM(ATOM_ROTATION_LOCK, STR_ATOM_ROTATION_LOCK );
+		_MAKE_ATOM(ATOM_ROTATION_LOCK, STR_ATOM_ROTATION_LOCK);
 		root =  ecore_x_window_root_first_get();
 		XSelectInput(ecore_x_display_get(), root, PropertyChangeMask);
 #endif
@@ -254,9 +250,8 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (void *evnet_info, enum appcore
 
 EXPORT_API int appcore_unset_rotation_cb(void)
 {
-	if (rot.wm_rotate) {
+	if (rot.wm_rotate)
 		return rot.wm_rotate->unset_rotation_cb();
-	}
 	else {
 		int r;
 
@@ -297,9 +292,8 @@ EXPORT_API int appcore_unset_rotation_cb(void)
 
 EXPORT_API int appcore_get_rotation_state(enum appcore_rm *curr)
 {
-	if (rot.wm_rotate) {
+	if (rot.wm_rotate)
 		return rot.wm_rotate->get_rotation_state(curr);
-	}
 	else {
 		int r;
 		unsigned long event;
@@ -323,9 +317,8 @@ EXPORT_API int appcore_get_rotation_state(enum appcore_rm *curr)
 
 EXPORT_API int appcore_pause_rotation_cb(void)
 {
-	if (rot.wm_rotate) {
+	if (rot.wm_rotate)
 		return rot.wm_rotate->pause_rotation_cb();
-	}
 	else {
 		int r;
 
@@ -360,11 +353,11 @@ EXPORT_API int appcore_pause_rotation_cb(void)
 
 EXPORT_API int appcore_resume_rotation_cb(void)
 {
-	if (rot.wm_rotate) {
+	if (rot.wm_rotate)
 		return rot.wm_rotate->resume_rotation_cb();
-	}
 	else {
-		int r,ret;
+		int r;
+		int ret;
 		enum appcore_rm m;
 
 		_retv_if(rot.callback == NULL, 0);
