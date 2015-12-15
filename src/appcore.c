@@ -36,6 +36,7 @@
 #include <vconf.h>
 #include <aul.h>
 #include <tzplatform_config.h>
+#include <bundle_internal.h>
 #include "appcore-internal.h"
 
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
