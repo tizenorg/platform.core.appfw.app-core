@@ -520,7 +520,7 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 		_DBG("[APP %d]     AUL event: AUL_START", _pid);
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 		bg = bundle_get_val(b, AUL_K_ALLOWED_BG);
-		if (bg && strncmp(bg, "ALLOWED_BG", strlen("ALLOWGED_BG")) == 0) {
+		if (bg && strncmp(bg, "ALLOWED_BG", strlen("ALLOWED_BG")) == 0) {
 			_DBG("[__SUSPEND__] allowed background");
 			ac->allowed_bg = true;
 			__remove_suspend_timer(data);
