@@ -54,45 +54,52 @@ struct rot_s {
 	int lock;
 	void *cbdata;
 	int cb_set;
-	int sf_started;
+	int sensord_started;
 
 	struct ui_wm_rotate* wm_rotate;
 };
 static struct rot_s rot;
 
 struct rot_evt {
-	enum accelerometer_rotate_state re;
+	enum auto_rotation_state re;
 	enum appcore_rm rm;
 };
 
 static struct rot_evt re_to_rm[] = {
 	{
-	 ROTATION_EVENT_0,
-	  APPCORE_RM_PORTRAIT_NORMAL,
+		AUTO_ROTATION_DEGREE_0,
+		APPCORE_RM_PORTRAIT_NORMAL,
 	},
 	{
-	 ROTATION_EVENT_90,
-	 APPCORE_RM_LANDSCAPE_NORMAL,
+		AUTO_ROTATION_DEGREE_90,
+		APPCORE_RM_LANDSCAPE_NORMAL,
 	},
 	{
-	 ROTATION_EVENT_180,
-	 APPCORE_RM_PORTRAIT_REVERSE,
+		AUTO_ROTATION_DEGREE_180,
+		APPCORE_RM_PORTRAIT_REVERSE,
 	},
 	{
-	 ROTATION_EVENT_270,
-	 APPCORE_RM_LANDSCAPE_REVERSE,
+		AUTO_ROTATION_DEGREE_270,
+		APPCORE_RM_LANDSCAPE_REVERSE,
 	},
 };
 
-static enum appcore_rm __get_mode(int event_data)
+static enum appcore_rm __get_mode(sensor_data_t data)
 {
 	int i;
+	int event;
 	enum appcore_rm m;
 
 	m = APPCORE_RM_UNKNOWN;
+	if (data.value_count > 0) {
+		event = (int)data.values[0];
+	} else {
+		_ERR("Failed to get sensor data");
+		return -1;
+	}
 
 	for (i = 0; i < sizeof(re_to_rm) / sizeof(re_to_rm[0]); i++) {
-		if (re_to_rm[i].re == event_data) {
+		if (re_to_rm[i].re == event) {
 			m = re_to_rm[i].rm;
 			break;
 		}
@@ -101,23 +108,20 @@ static enum appcore_rm __get_mode(int event_data)
 	return m;
 }
 
-static void __changed_cb(unsigned int event_type, sensor_event_data_t *event,
-		       void *data)
+static void __changed_cb(sensor_t sensor, unsigned int event_type,
+		sensor_data_t *data, void *user_data)
 {
-	int *cb_event_data;
 	enum appcore_rm m;
 
 	if (rot.lock)
 		return;
 
-	if (event_type != ACCELEROMETER_EVENT_ROTATION_CHECK) {
+	if (event_type != AUTO_ROTATION_CHANGE_STATE_EVENT) {
 		errno = EINVAL;
 		return;
 	}
 
-	cb_event_data = (int *)(event->event_data);
-
-	m = __get_mode(*cb_event_data);
+	m = __get_mode(*data);
 
 	_DBG("[APP %d] Rotation: %d -> %d", getpid(), rot.mode, m);
 
@@ -191,6 +195,7 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (void *evnet_info, enum appcore
 	else {
 		int r;
 		int handle;
+		sensor_t sensor = sensord_get_sensor(AUTO_ROTATION_SENSOR);
 
 		if (cb == NULL) {
 			errno = EINVAL;
@@ -202,17 +207,17 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (void *evnet_info, enum appcore
 			return -1;
 		}
 
-		handle = sf_connect(ACCELEROMETER_SENSOR);
+		handle = sensord_connect(sensor);
 		if (handle < 0) {
-			_ERR("sf_connect failed: %d", handle);
+			_ERR("sensord_connect failed: %d", handle);
 			return -1;
 		}
 
-		r = sf_register_event(handle, ACCELEROMETER_EVENT_ROTATION_CHECK,
-				      NULL, __changed_cb, data);
+		r = sensord_register_event(handle, AUTO_ROTATION_CHANGE_STATE_EVENT,
+				      SENSOR_INTERVAL_NORMAL, 0, __changed_cb, data);
 		if (r < 0) {
-			_ERR("sf_register_event failed: %d", r);
-			sf_disconnect(handle);
+			_ERR("sensord_register_event failed: %d", r);
+			sensord_disconnect(handle);
 			return -1;
 		}
 
@@ -220,21 +225,21 @@ EXPORT_API int appcore_set_rotation_cb(int (*cb) (void *evnet_info, enum appcore
 		rot.callback = cb;
 		rot.cbdata = data;
 
-		r = sf_start(handle, 0);
+		r = sensord_start(handle, 0);
 		if (r < 0) {
-			_ERR("sf_start failed: %d", r);
-			r = sf_unregister_event(handle, ACCELEROMETER_EVENT_ROTATION_CHECK);
+			_ERR("sensord_start failed: %d", r);
+			r = sensord_unregister_event(handle, AUTO_ROTATION_CHANGE_STATE_EVENT);
 			if (r < 0)
-				_ERR("sf_unregister_event failed: %d", r);
+				_ERR("sensord_unregister_event failed: %d", r);
 
 			rot.callback = NULL;
 			rot.cbdata = NULL;
 			rot.cb_set = 0;
-			rot.sf_started = 0;
-			sf_disconnect(handle);
+			rot.sensord_started = 0;
+			sensord_disconnect(handle);
 			return -1;
 		}
-		rot.sf_started = 1;
+		rot.sensord_started = 1;
 
 		rot.handle = handle;
 		__add_rotlock(data);
@@ -260,10 +265,10 @@ EXPORT_API int appcore_unset_rotation_cb(void)
 		__del_rotlock();
 
 		if (rot.cb_set) {
-			r = sf_unregister_event(rot.handle,
-						ACCELEROMETER_EVENT_ROTATION_CHECK);
+			r = sensord_unregister_event(rot.handle,
+						AUTO_ROTATION_CHANGE_STATE_EVENT);
 			if (r < 0) {
-				_ERR("sf_unregister_event failed: %d", r);
+				_ERR("sensord_unregister_event failed: %d", r);
 				return -1;
 			}
 			rot.cb_set = 0;
@@ -271,18 +276,18 @@ EXPORT_API int appcore_unset_rotation_cb(void)
 		rot.callback = NULL;
 		rot.cbdata = NULL;
 
-		if (rot.sf_started == 1) {
-			r = sf_stop(rot.handle);
+		if (rot.sensord_started == 1) {
+			r = sensord_stop(rot.handle);
 			if (r < 0) {
-				_ERR("sf_stop failed: %d", r);
+				_ERR("sensord_stop failed: %d", r);
 				return -1;
 			}
-			rot.sf_started = 0;
+			rot.sensord_started = 0;
 		}
 
-		r = sf_disconnect(rot.handle);
+		r = sensord_disconnect(rot.handle);
 		if (r < 0) {
-			_ERR("sf_disconnect failed: %d", r);
+			_ERR("sensord_disconnect failed: %d", r);
 			return -1;
 		}
 		rot.handle = -1;
@@ -296,21 +301,21 @@ EXPORT_API int appcore_get_rotation_state(enum appcore_rm *curr)
 		return rot.wm_rotate->get_rotation_state(curr);
 	else {
 		int r;
-		unsigned long event;
+		sensor_data_t data;
 
 		if (curr == NULL) {
 			errno = EINVAL;
 			return -1;
 		}
 
-		r = sf_check_rotation(&event);
+		r = sensord_get_data(rot.handle, AUTO_ROTATION_SENSOR, &data);
 		if (r < 0) {
-			_ERR("sf_check_rotation failed: %d", r);
+			_ERR("sensord_get_data failed: %d", r);
 			*curr = APPCORE_RM_UNKNOWN;
 			return -1;
 		}
 
-		*curr = __get_mode(event);
+		*curr = __get_mode(data);
 	}
 	return 0;
 }
@@ -328,23 +333,23 @@ EXPORT_API int appcore_pause_rotation_cb(void)
 		__del_rotlock();
 
 		if (rot.cb_set) {
-			r = sf_unregister_event(rot.handle,
-						ACCELEROMETER_EVENT_ROTATION_CHECK);
+			r = sensord_unregister_event(rot.handle,
+						AUTO_ROTATION_CHANGE_STATE_EVENT);
 			if (r < 0) {
-				_ERR("sf_unregister_event in appcore_internal_sf_stop failed: %d", r);
+				_ERR("sensord_unregister_event failed: %d", r);
 				return -1;
 			}
 			rot.cb_set = 0;
 		}
 
-		if (rot.sf_started == 1) {
-			r = sf_stop(rot.handle);
+		if (rot.sensord_started == 1) {
+			r = sensord_stop(rot.handle);
 			if (r < 0) {
-				_ERR("sf_stop in appcore_internal_sf_stop failed: %d",
+				_ERR("sensord_stop failed: %d",
 				     r);
 				return -1;
 			}
-			rot.sf_started = 0;
+			rot.sensord_started = 0;
 		}
 	}
 
@@ -364,29 +369,29 @@ EXPORT_API int appcore_resume_rotation_cb(void)
 		_DBG("[APP %d] appcore_resume_rotation_cb is called", getpid());
 
 		if (rot.cb_set == 0) {
-			r = sf_register_event(rot.handle,
-					      ACCELEROMETER_EVENT_ROTATION_CHECK, NULL,
-					      __changed_cb, rot.cbdata);
+			r = sensord_register_event(rot.handle,
+					AUTO_ROTATION_CHANGE_STATE_EVENT,
+					SENSOR_INTERVAL_NORMAL, 0, __changed_cb, rot.cbdata);
 			if (r < 0) {
-				_ERR("sf_register_event in appcore_internal_sf_start failed: %d", r);
+				_ERR("sensord_register_event failed: %d", r);
 				return -1;
 			}
 			rot.cb_set = 1;
 		}
 
-		if (rot.sf_started == 0) {
-			r = sf_start(rot.handle, 0);
+		if (rot.sensord_started == 0) {
+			r = sensord_start(rot.handle, 0);
 			if (r < 0) {
-				_ERR("sf_start in appcore_internal_sf_start failed: %d",
+				_ERR("sensord_start failed: %d",
 				     r);
-				ret = sf_unregister_event(rot.handle,
-						    ACCELEROMETER_EVENT_ROTATION_CHECK);
+				ret = sensord_unregister_event(rot.handle,
+						    AUTO_ROTATION_CHANGE_STATE_EVENT);
 				if (ret < 0)
-					_ERR("sf_unregister_event failed: %d", ret);
+					_ERR("sensord_unregister_event failed: %d", ret);
 				rot.cb_set = 0;
 				return -1;
 			}
-			rot.sf_started = 1;
+			rot.sensord_started = 1;
 		}
 
 		__add_rotlock(rot.cbdata);
