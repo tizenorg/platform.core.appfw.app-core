@@ -18,7 +18,7 @@ BuildRequires:  pkgconfig(ecore-wayland)
 %endif
 %endif
 Source1001:     app-core.manifest
-BuildRequires:  pkgconfig(dbus-glib-1)
+BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(aul)
