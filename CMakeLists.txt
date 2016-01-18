@@ -41,7 +41,7 @@ ENDIF(_APPFW_FEATURE_BACKGROUND_MANAGEMENT)
 SET(HEADERS_common appcore-common.h)
 
 INCLUDE(FindPkgConfig)
-SET(APPCORE_PKG_CHECK_MODULES "dbus-glib-1 vconf sensor aul dlog libtzplatform-config ecore")
+SET(APPCORE_PKG_CHECK_MODULES "gio-2.0 vconf sensor aul dlog libtzplatform-config ecore")
 IF(_WITH_X11)
        SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} x11 eina ecore-x")
 ENDIF(_WITH_X11)

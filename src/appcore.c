@@ -1,9 +1,5 @@
 /*
- *  app-core
- *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved.
- *
- * Contact: Jayoun Lee <airjany@samsung.com>, Sewook Park <sewook7.park@samsung.com>, Jaeho Lee <jaeho81.lee@samsung.com>
+ * Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 
@@ -40,8 +35,7 @@
 #include "appcore-internal.h"
 
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
-#include <dbus/dbus.h>
-#include <dbus/dbus-glib-lowlevel.h>
+#include <gio/gio.h>
 
 #define RESOURCED_FREEZER_PATH "/Org/Tizen/Resourced/Freezer"
 #define RESOURCED_FREEZER_INTERFACE "org.tizen.resourced.freezer"
@@ -147,8 +141,8 @@ static struct evt_ops evtops[] = {
 };
 
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
-static DBusConnection *bus = NULL;
-static int __suspend_dbus_handler_initialized = 0;
+static GDBusConnection *bus = NULL;
+static guint __suspend_dbus_handler_initialized = 0;
 #endif
 
 static int __get_dir_name(char *dirname)
@@ -759,88 +753,65 @@ EXPORT_API int appcore_flush_memory(void)
 }
 
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
-static DBusHandlerResult __suspend_dbus_signal_filter(DBusConnection *conn,
-					DBusMessage *message, void *user_data)
+static void __suspend_dbus_signal_handler(GDBusConnection *connection,
+					const gchar *sender_name,
+					const gchar *object_path,
+					const gchar *interface_name,
+					const gchar *signal_name,
+					GVariant *parameters,
+					gpointer user_data)
 {
-	const char *sender;
-	const char *interface;
-	int pid;
-	int state;
-	int suspend;
+	struct appcore *ac = (struct appcore *)user_data;
+	gint suspend = APPCORE_SUSPENDED_STATE_DID_EXIT_FROM_SUSPEND;
+	gint pid;
+	gint status;
 
-	DBusError error;
-	dbus_error_init(&error);
-
-	sender = dbus_message_get_sender(message);
-	if (sender == NULL)
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-
-	interface = dbus_message_get_interface(message);
-	if (interface == NULL) {
-		_ERR("reject by security issue - no interface\n");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-	}
-
-	if (dbus_message_is_signal(message, interface, RESOURCED_FREEZER_SIGNAL)) {
-		if (dbus_message_get_args(message, &error, DBUS_TYPE_INT32, &state,
-					DBUS_TYPE_INT32, &pid, DBUS_TYPE_INVALID) == FALSE) {
-			_ERR("Failed to get data: %s", error.message);
-			dbus_error_free(&error);
-			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-		}
-
-		if (pid == getpid() && state == 0) { /* thawed */
-			suspend = APPCORE_SUSPENDED_STATE_DID_EXIT_FROM_SUSPEND;
-			SECURE_LOGD("[__SUSPEND__] state: %d (0: thawed, 1: frozen), pid: %d", state, pid);
-
-			struct appcore *ac = (struct appcore *)user_data;
-			if (!ac->allowed_bg && ac->suspended_state) {
+	if (g_strdmp0(signal_name, RESOURCED_FREEZER_SIGNAL) == 0) {
+		g_variant_get(parameters, "(ii)", &status, &pid);
+		if (pid == getpid() && status == 0) { /* thawed */
+			if (ac && !ac->allowed_bg && ac->suspended_state) {
 				__remove_suspend_timer(ac);
-				__sys_do(user_data, &suspend, SE_SUSPENDED_STATE);
+				__sys_do(ac, &suspend, SE_SUSPENDED_STATE);
 				ac->suspended_state = false;
 				__add_suspend_timer(ac);
 			}
 		}
 	}
-
-	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 int _appcore_init_suspend_dbus_handler(void *data)
 {
-	DBusError error;
-	char rule[MAX_LOCAL_BUFSZ];
+	GError *err;
 
 	if (__suspend_dbus_handler_initialized)
 		return 0;
 
-	dbus_error_init(&error);
 	if (!bus) {
-		bus = dbus_bus_get_private(DBUS_BUS_SYSTEM, &error);
+		bus = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &err);
 		if (!bus) {
-			_ERR("Failed to connect to the D-BUS daemon: %s", error.message);
-			dbus_error_free(&error);
+			_ERR("Failed to connect to the D-BUS daemon: %s",
+						err->message);
+			g_clear_error(&err);
 			return -1;
 		}
 	}
-	dbus_connection_setup_with_g_main(bus, NULL);
 
-	snprintf(rule, MAX_LOCAL_BUFSZ,
-			"path='%s',type='signal',interface='%s'", RESOURCED_FREEZER_PATH, RESOURCED_FREEZER_INTERFACE);
-	/* listening to messages */
-	dbus_bus_add_match(bus, rule, &error);
-	if (dbus_error_is_set(&error)) {
-		_ERR("Fail to rule set: %s", error.message);
-		dbus_error_free(&error);
+	__suspend_dbus_handler_initialized = g_dbus_connection_signal_subscribe(
+						bus,
+						NULL,
+						RESOURCED_FREEZER_PATH,
+						RESOURCED_FREEZER_SIGNAL,
+						RESOURCED_FREEZER_INTERFACE,
+						NULL,
+						G_DBUS_SIGNAL_FLAGS_NONE,
+						__suspend_dbus_signal_handler,
+						data,
+						NULL);
+	if (__suspend_dbus_handler_initialized == 0) {
+		_E("g_dbus_connection_signal_subscribe() is failed.");
 		return -1;
 	}
 
-	if (dbus_connection_add_filter(bus, __suspend_dbus_signal_filter, data, NULL) == FALSE) {
-		_ERR("add filter fail");
-		return -1;
-	}
-
-	__suspend_dbus_handler_initialized = 1;
 	_DBG("[__SUSPEND__] suspend signal initialized");
 
 	return 0;
