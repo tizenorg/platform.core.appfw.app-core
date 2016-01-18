@@ -1,9 +1,5 @@
 /*
- *  app-core
- *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved.
- *
- * Contact: Jayoun Lee <airjany@samsung.com>, Sewook Park <sewook7.park@samsung.com>, Jaeho Lee <jaeho81.lee@samsung.com>
+ * Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 #include <sys/types.h>
@@ -44,13 +39,16 @@
 #include <glib-object.h>
 #include <malloc.h>
 #include <glib.h>
-#include <dbus/dbus.h>
-#include <dbus/dbus-glib-lowlevel.h>
+#include <gio/gio.h>
 #include <stdbool.h>
 #include <aul.h>
 
 #include "appcore-internal.h"
 #include "appcore-efl.h"
+
+#define RESOURCED_PROCESS_PATH "/Org/Tizen/ResourceD/Process"
+#define RESOURCED_PROCESS_INTERFACE "org.tizen.resourced.process"
+#define RESOURCED_PROCSTATUS_SIGNAL "ProcStatus"
 
 static pid_t _pid;
 static bool resource_reclaiming = TRUE;
@@ -102,7 +100,7 @@ static const char *_ae_name[AE_MAX] = {
 	[AE_UNKNOWN] = "UNKNOWN",
 	[AE_CREATE] = "CREATE",
 	[AE_TERMINATE] = "TERMINATE",
-	[AE_PAUSE] = "PAUSE",
+	[AE_PAUSE] PAUSE",
 	[AE_RESUME] = "RESUME",
 	[AE_RESET] = "RESET",
 	[AE_LOWMEM_POST] = "LOWMEM_POST",
@@ -118,7 +116,7 @@ static const char *_as_name[] = {
 };
 
 static bool b_active = FALSE;
-static bool first_launch = TRUE;
+static aunch = TRUE;
 
 struct win_node {
 	unsigned int win;
@@ -133,43 +131,41 @@ static struct ui_wm_rotate wm_rotate;
 #endif
 static Eina_Bool __visibility_cb(void *data, int type, void *event);
 
-static void _send_to_resourced(enum proc_status_type type)
+static void __send_to_resourced(enum proc_status_type type)
 {
-	DBusConnection *conn;
-	DBusMessage* msg;
-	DBusError dbus_error;
+	GDBusConnection *conn;
+	GError *err = NULL;
+	GVariant *param;
 
-	dbus_error_init(&dbus_error);
-
-	conn = dbus_bus_get(DBUS_BUS_SYSTEM, &dbus_error);
+	conn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &err);
 	if (!conn) {
-		_ERR("dbus_bus_get failed : [%s]", dbus_error.message);
-		dbus_error_free(&dbus_error);
+		_ERR("g_bus_bus_get() is failed: [%s]", err->message);
+		g_clear_error(&err);
 		return;
 	}
 
-	msg = dbus_message_new_signal("/Org/Tizen/ResourceD/Process",
-			"org.tizen.resourced.process",
-			"ProcStatus");
-	if (!msg) {
-		_ERR("dbus_message_new_signal is failed");
+	param = g_variant_new("(ii)", type, _pid);
+	if (g_dbus_connection_emit_signal(conn,
+					NULL,
+					RESOURCED_PROCESS_PATH,
+					RESOURCED_PROCESS_INTERFACE,
+					RESOURCED_PROCSTATUS_SIGNAL,
+					param,
+					&err) == FALSE) {
+		_ERR("g_dbus_connection_emit_signal() is failed: [%s]",
+					err->message);
+		g_clear_error(&err);
+		if (g_variant_is_floating(param) == TRUE)
+			g_variant_unref(param);
 		return;
 	}
 
-	if (!dbus_message_append_args(msg,
-				DBUS_TYPE_INT32, &type,
-				DBUS_TYPE_INT32, &_pid,
-				DBUS_TYPE_INVALID)) {
-		_ERR("dbus_message_append_args is failed. type = %d, pid = %d",
-				type, _pid);
-		dbus_message_unref(msg);
-		return;
-	}
+	if (g_dbus_connection_flush_sync(conn, NULL, &err) == FALSE)
+		_ERR("g_dbus_connection_flush_sync() is failed: [%s]",
+					err->message);
 
-	if (!dbus_connection_send(conn, msg, NULL))
-		_ERR("dbus_connection_send is failed");
-
-	dbus_message_unref(msg);
+	g_clear_error(&err);
+	g_object_unref(conn);
 }
 
 static GSList *g_winnode_list;
@@ -403,7 +399,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		/* TODO : rotation stop */
 		/* r = appcore_pause_rotation_cb(); */
 		aul_status_update(STATUS_BG);
-		_send_to_resourced(PROC_STATUS_BACKGRD);
+		__send_to_resourced(PROC_STATUS_BACKGRD);
 		break;
 	case AE_RESUME:
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:start]",
@@ -434,7 +430,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:Launching:done]",
 		    ui->name);
 		aul_status_update(STATUS_VISIBLE);
-		_send_to_resourced(PROC_STATUS_FOREGRD);
+		__send_to_resourced(PROC_STATUS_FOREGRD);
 		break;
 	case AE_TERMINATE_BGAPP:
 		if (ui->state == AS_PAUSED) {
