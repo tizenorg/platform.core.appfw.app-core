@@ -46,7 +46,8 @@
 
 #define PKGNAME_MAX 256
 #define PATH_APP_ROOT tzplatform_getenv(TZ_USER_APP)
-#define PATH_RO_APP_ROOT tzplatform_getenv(TZ_SYS_RO_APP)
+#define PATH_SYS_RO_APP_ROOT tzplatform_getenv(TZ_SYS_RO_APP)
+#define PATH_SYS_RW_APP_ROOT tzplatform_getenv(TZ_SYS_RW_APP)
 #define PATH_RES "/res"
 #define PATH_LOCALE "/locale"
 
@@ -162,9 +163,16 @@ static int __get_dir_name(char *dirname)
 			PATH_APP_ROOT, pkg_name);
 	if (r < 0)
 		return -1;
-	if (access(dirname, R_OK) == 0) return 0;
+	if (access(dirname, R_OK) == 0)
+		return 0;
 	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
-			PATH_RO_APP_ROOT, pkg_name);
+			PATH_SYS_RO_APP_ROOT, pkg_name);
+	if (r < 0)
+		return -1;
+	if (access(dirname, R_OK) == 0)
+		return 0;
+	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
+			PATH_SYS_RW_APP_ROOT, pkg_name);
 	if (r < 0)
 		return -1;
 
