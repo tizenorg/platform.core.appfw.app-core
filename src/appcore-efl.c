@@ -42,6 +42,7 @@
 #include <gio/gio.h>
 #include <stdbool.h>
 #include <aul.h>
+#include <ttrace.h>
 
 #include "appcore-internal.h"
 #include "appcore-efl.h"
@@ -359,8 +360,12 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		}
 #endif
 
-		if (ui->ops->reset)
+		if (ui->ops->reset) {
+			traceBegin(TTRACE_TAG_APPLICATION_MANAGER,
+					"APPCORE:RESET");
 			r = ui->ops->reset(b, ui->ops->data);
+			traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
+		}
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:done]", ui->name);
 
 		if (first_launch) {
@@ -379,8 +384,12 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 	case AE_PAUSE:
 		if (ui->state == AS_RUNNING) {
 			_DBG("[APP %d] PAUSE", _pid);
-			if (ui->ops->pause)
+			if (ui->ops->pause) {
+				traceBegin(TTRACE_TAG_APPLICATION_MANAGER,
+						"APPCORE:PAUSE");
 				r = ui->ops->pause(ui->ops->data);
+				traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
+			}
 			ui->state = AS_PAUSED;
 			if (r >= 0 && resource_reclaiming == TRUE)
 				__appcore_timer_add(ui);
@@ -415,8 +424,12 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 				ui->pending_data = NULL;
 			}
 
-			if (ui->ops->resume)
+			if (ui->ops->resume) {
+				traceBegin(TTRACE_TAG_APPLICATION_MANAGER,
+					"APPCORE:RESUME");
 				ui->ops->resume(ui->ops->data);
+				traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
+			}
 			ui->state = AS_RUNNING;
 		}
 		/*TODO : rotation start*/
@@ -907,12 +920,18 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 
 	LOG(LOG_DEBUG, "LAUNCH", "[%s:Platform:appcore_init:done]", ui->name);
 	if (ui->ops && ui->ops->create) {
+		traceBegin(TTRACE_TAG_APPLICATION_MANAGER, "APPCORE:CREATE");
 		r = ui->ops->create(ui->ops->data);
+		traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
 		if (r < 0) {
 			_ERR("create() return error");
 			appcore_exit();
-			if (ui->ops && ui->ops->terminate)
+			if (ui->ops && ui->ops->terminate) {
+				traceBegin(TTRACE_TAG_APPLICATION_MANAGER,
+					"APPCORE:TERMINATE");
 				ui->ops->terminate(ui->ops->data);
+				traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
+			}
 			errno = ECANCELED;
 			return -1;
 		}
@@ -933,12 +952,19 @@ static void __after_loop(struct ui_priv *ui)
 
 	if (ui->state == AS_RUNNING) {
 		_DBG("[APP %d] PAUSE before termination", _pid);
-		if (ui->ops && ui->ops->pause)
+		if (ui->ops && ui->ops->pause) {
+			traceBegin(TTRACE_TAG_APPLICATION_MANAGER,
+					"APPCORE:PAUSE");
 			ui->ops->pause(ui->ops->data);
+			traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
+		}
 	}
 
-	if (ui->ops && ui->ops->terminate)
+	if (ui->ops && ui->ops->terminate) {
+		traceBegin(TTRACE_TAG_APPLICATION_MANAGER, "APPCORE:TERMINATE");
 		ui->ops->terminate(ui->ops->data);
+		traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
+	}
 
 	ui->state = AS_DYING;
 

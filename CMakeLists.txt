@@ -84,7 +84,7 @@ SET(SRCS_efl src/appcore-efl.c src/appcore-group.c)
 SET(HEADERS_efl appcore-efl.h)
 
 INCLUDE(FindPkgConfig)
-SET(APPCORE_PKG_CHECK_MODULES2 "elementary dlog ecore gobject-2.0 glib-2.0 aul pkgmgr-info")
+SET(APPCORE_PKG_CHECK_MODULES2 "elementary dlog ecore gobject-2.0 glib-2.0 aul pkgmgr-info ttrace")
 IF(_WITH_X11)
         SET(APPCORE_PKG_CHECK_MODULES2 "${APPCORE_PKG_CHECK_MODULES2} ecore-x")
 ENDIF(_WITH_X11)
