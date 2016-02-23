@@ -47,22 +47,9 @@
 #include "appcore-internal.h"
 #include "appcore-efl.h"
 
-#define RESOURCED_PROCESS_PATH "/Org/Tizen/ResourceD/Process"
-#define RESOURCED_PROCESS_INTERFACE "org.tizen.resourced.process"
-#define RESOURCED_PROCSTATUS_SIGNAL "ProcStatus"
-
 static pid_t _pid;
 static bool resource_reclaiming = TRUE;
 static int tmp_val = 0;
-
-/* cgroup command type */
-enum proc_status_type {
-	PROC_STATUS_LAUNCH,
-	PROC_STATUS_RESUME,
-	PROC_STATUS_TERMINATE,
-	PROC_STATUS_FOREGRD,
-	PROC_STATUS_BACKGRD,
-};
 
 struct ui_priv {
 	const char *name;
@@ -131,40 +118,6 @@ struct win_node {
 static struct ui_wm_rotate wm_rotate;
 #endif
 static Eina_Bool __visibility_cb(void *data, int type, void *event);
-
-static void __send_to_resourced(enum proc_status_type type)
-{
-	GDBusConnection *conn;
-	GError *err = NULL;
-
-	conn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &err);
-	if (!conn) {
-		_ERR("g_bus_bus_get() is failed: [%s]", err->message);
-		g_error_free(err);
-		return;
-	}
-
-	if (g_dbus_connection_emit_signal(conn,
-					NULL,
-					RESOURCED_PROCESS_PATH,
-					RESOURCED_PROCESS_INTERFACE,
-					RESOURCED_PROCSTATUS_SIGNAL,
-					g_variant_new("(ii)", type, _pid),
-					&err) == FALSE) {
-		_ERR("g_dbus_connection_emit_signal() is failed: [%s]",
-					err->message);
-		g_error_free(err);
-		return;
-	}
-
-	if (g_dbus_connection_flush_sync(conn, NULL, &err) == FALSE)
-		_ERR("g_dbus_connection_flush_sync() is failed: [%s]",
-					err->message);
-
-	g_clear_error(&err);
-	g_object_unref(conn);
-}
-
 static GSList *g_winnode_list;
 
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
@@ -404,7 +357,6 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		/* TODO : rotation stop */
 		/* r = appcore_pause_rotation_cb(); */
 		aul_status_update(STATUS_BG);
-		__send_to_resourced(PROC_STATUS_BACKGRD);
 		break;
 	case AE_RESUME:
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:resume:start]",
@@ -439,7 +391,6 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:Launching:done]",
 		    ui->name);
 		aul_status_update(STATUS_VISIBLE);
-		__send_to_resourced(PROC_STATUS_FOREGRD);
 		break;
 	case AE_TERMINATE_BGAPP:
 		if (ui->state == AS_PAUSED) {
