@@ -1130,7 +1130,7 @@ EXPORT_API int appcore_set_preinit_window_name(const char *win_name)
 		return ret;
 	}
 
-	preinit_window = aul_get_preinit_window(win_name);
+	preinit_window = elm_win_precreated_object_get();
 	if (!preinit_window) {
 		_ERR("Failed to get preinit window");
 		return ret;
