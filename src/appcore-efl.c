@@ -42,6 +42,8 @@
 #include <gio/gio.h>
 #include <stdbool.h>
 #include <aul.h>
+#include <aul_svc.h>
+#include <bundle_internal.h>
 #include <ttrace.h>
 
 #include "appcore-internal.h"
@@ -80,6 +82,7 @@ struct ui_priv {
 	void *rot_cb_data;
 	enum appcore_rm rot_mode;
 	bundle *pending_data;
+	char *below_app;
 };
 
 static struct ui_priv priv;
@@ -249,6 +252,7 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 {
 	int r = -1;
 	struct ui_priv *ui = data;
+	const char *below_app;
 
 	_DBG("[APP %d] Event: %d", _pid, event);
 	_ret_if(ui == NULL || event >= AE_MAX);
@@ -306,6 +310,14 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		ui->pending_data = bundle_dup(b);
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:start]", ui->name);
 
+		if (ui->below_app) {
+			free(ui->below_app);
+			ui->below_app = NULL;
+		}
+
+		below_app = bundle_get_val(b, AUL_SVC_K_RELOCATE_BELOW);
+		if (below_app)
+			ui->below_app = strdup(below_app);
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 		if (ui->exit_from_suspend) {
 			_DBG("[__SUSPEND__] reset case");
@@ -383,6 +395,12 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 				traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
 			}
 			ui->state = AS_RUNNING;
+
+			if (ui->below_app) {
+				aul_app_group_activate_below(ui->below_app);
+				free(ui->below_app);
+				ui->below_app = NULL;
+			}
 		}
 		/*TODO : rotation start*/
 		/* r = appcore_resume_rotation_cb(); */
