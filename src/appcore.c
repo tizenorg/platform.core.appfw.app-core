@@ -605,7 +605,7 @@ static void __clear(struct appcore *ac)
 	memset(ac, 0, sizeof(struct appcore));
 }
 
-void appcore_get_app_core(struct appcore **ac)
+EXPORT_API void appcore_get_app_core(struct appcore **ac)
 {
 	*ac = &core;
 }
@@ -774,7 +774,7 @@ static void __suspend_dbus_signal_handler(GDBusConnection *connection,
 	gint pid;
 	gint status;
 
-	if (g_strdmp0(signal_name, RESOURCED_FREEZER_SIGNAL) == 0) {
+	if (g_strcmp0(signal_name, RESOURCED_FREEZER_SIGNAL) == 0) {
 		g_variant_get(parameters, "(ii)", &status, &pid);
 		if (pid == getpid() && status == 0) { /* thawed */
 			if (ac && !ac->allowed_bg && ac->suspended_state) {
@@ -807,16 +807,16 @@ int _appcore_init_suspend_dbus_handler(void *data)
 	__suspend_dbus_handler_initialized = g_dbus_connection_signal_subscribe(
 						bus,
 						NULL,
-						RESOURCED_FREEZER_PATH,
-						RESOURCED_FREEZER_SIGNAL,
 						RESOURCED_FREEZER_INTERFACE,
+						RESOURCED_FREEZER_SIGNAL,
+						RESOURCED_FREEZER_PATH,
 						NULL,
 						G_DBUS_SIGNAL_FLAGS_NONE,
 						__suspend_dbus_signal_handler,
 						data,
 						NULL);
 	if (__suspend_dbus_handler_initialized == 0) {
-		_E("g_dbus_connection_signal_subscribe() is failed.");
+		_ERR("g_dbus_connection_signal_subscribe() is failed.");
 		return -1;
 	}
 
