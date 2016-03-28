@@ -853,6 +853,9 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 {
 	int r;
 	char *hwacc = NULL;
+#if _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+	struct appcore *ac = NULL;
+#endif
 
 	if (argc == NULL || argv == NULL) {
 		_ERR("argc/argv is NULL");

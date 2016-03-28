@@ -90,13 +90,13 @@ Group:      Development/Libraries
 %description template
 Application basics template
 
-%if "%{?tizen_profile_name}" == "wearable"
+%if "%{?profile}" == "wearable"
 %define appfw_feature_background_management 1
 %else
-%if "%{?tizen_profile_name}" == "mobile"
+%if "%{?profile}" == "mobile"
 %define appfw_feature_background_management 1
 %else
-%if "%{?tizen_profile_name}" == "tv"
+%if "%{?profile}" == "tv"
 %define appfw_feature_background_management 0
 %endif
 %endif
