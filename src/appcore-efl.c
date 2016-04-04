@@ -26,6 +26,9 @@
 
 #if defined(WAYLAND)
 #include <Ecore_Wayland.h>
+#include <wayland-client.h>
+#include <wayland-tbm-client.h>
+#include <tizen-extension-client-protocol.h>
 #elif defined(X11)
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -122,6 +125,102 @@ static struct ui_wm_rotate wm_rotate;
 #endif
 static Eina_Bool __visibility_cb(void *data, int type, void *event);
 static GSList *g_winnode_list;
+
+static struct wl_display *dsp;
+static struct wl_registry *reg;
+static struct tizen_policy *tz_policy;
+static bool bg_state = false;
+
+static void __wl_listener_cb(void *data, struct wl_registry *reg,
+		uint32_t id, const char *interface, uint32_t ver)
+{
+	if (!strncmp(interface, "tizen_policy", strlen("tizen_policy"))) {
+		if (!tz_policy)
+			tz_policy = wl_registry_bind(reg, id,
+					&tizen_policy_interface, 1);
+	}
+}
+
+static void __wl_listener_remove_cb(void *data, struct wl_registry *reg,
+		unsigned int id)
+{
+	/* do nothing */
+}
+
+static const struct wl_registry_listener reg_listener = {
+	__wl_listener_cb,
+	__wl_listener_remove_cb
+};
+
+static int __init_wl(void)
+{
+	_DBG("initialize wayland");
+	dsp = wl_display_connect(NULL);
+	if (dsp == NULL) {
+		_ERR("Failed to connect wl display");
+		return -1;
+	}
+
+	reg = wl_display_get_registry(dsp);
+	if (reg == NULL) {
+		_ERR("Failed to get registry");
+		wl_display_disconnect(dsp);
+		return -1;
+	}
+
+	wl_registry_add_listener(reg, &reg_listener, NULL);
+	wl_display_roundtrip(dsp);
+
+	if (!tz_policy) {
+		_ERR("Failed to get tizen policy interface");
+		wl_registry_destroy(reg);
+		wl_display_disconnect(dsp);
+		return -1;
+	}
+
+	return 0;
+}
+
+static void __finish_wl(void)
+{
+	if (tz_policy) {
+		tizen_policy_destroy(tz_policy);
+		tz_policy = NULL;
+	}
+
+	if (reg) {
+		wl_registry_destroy(reg);
+		reg = NULL;
+	}
+
+	if (dsp) {
+		wl_display_disconnect(dsp);
+		dsp = NULL;
+	}
+}
+
+static void __set_bg_state(void)
+{
+	if (__init_wl() < 0)
+		return;
+
+	tizen_policy_set_background_state(tz_policy, getpid());
+	wl_display_roundtrip(dsp);
+	bg_state = true;
+	_DBG("bg state: %d", bg_state);
+}
+
+static void __unset_bg_state(void)
+{
+	if (!tz_policy)
+		return;
+
+	tizen_policy_unset_background_state(tz_policy, getpid());
+	wl_display_roundtrip(dsp);
+	bg_state = false;
+	_DBG("bg state: %d", bg_state);
+	__finish_wl();
+}
 
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 static void __appcore_efl_prepare_to_suspend(void *data)
@@ -337,6 +436,8 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 			first_launch = FALSE;
 		} else {
 			_INFO("[APP %d] App already running, raise the window", _pid);
+			if (bg_state)
+				__unset_bg_state();
 #ifdef X11
 			x_raise_win(getpid());
 #else
@@ -856,6 +957,8 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 #if _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 	struct appcore *ac = NULL;
 #endif
+	bundle *b;
+	const char *str;
 
 	if (argc == NULL || argv == NULL) {
 		_ERR("argc/argv is NULL");
@@ -887,8 +990,17 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 #if _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 	appcore_get_app_core(&ac);
 	ui->app_core = ac;
-	SECURE_LOGD("[__SUSPEND__] appcore initialized, appcore addr: 0x%x", ac);
+	SECURE_LOGD("[__SUSPEND__] appcore initialized, appcore addr: #%x", ac);
 #endif
+
+	b = bundle_import_from_argv(*argc, *argv);
+	if (b) {
+		str = bundle_get_val(b, AUL_K_BG_LAUNCH);
+		if (str && strncmp(str, "true", strlen("true")) == 0)
+			__set_bg_state();
+
+		bundle_free(b);
+	}
 
 	LOG(LOG_DEBUG, "LAUNCH", "[%s:Platform:appcore_init:done]", ui->name);
 	if (ui->ops && ui->ops->create) {
