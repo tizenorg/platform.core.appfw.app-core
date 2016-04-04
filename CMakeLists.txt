@@ -47,7 +47,7 @@ IF(_WITH_X11)
        SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} x11 eina ecore-x")
 ENDIF(_WITH_X11)
 IF(_WITH_WAYLAND)
-       SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} ecore-wayland")
+       SET(APPCORE_PKG_CHECK_MODULES "${APPCORE_PKG_CHECK_MODULES} ecore-wayland wayland-client tizen-extension-client wayland-tbm-client")
 ENDIF(_WITH_WAYLAND)
 
 
