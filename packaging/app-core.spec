@@ -15,6 +15,9 @@ BuildRequires:  pkgconfig(eina)
 %else
 %if %{with wayland}
 BuildRequires:  pkgconfig(ecore-wayland)
+BuildRequires:  pkgconfig(wayland-client)
+BuildRequires:  pkgconfig(tizen-extension-client)
+BuildRequires:  pkgconfig(wayland-tbm-client)
 %endif
 %endif
 Source1001:     app-core.manifest
