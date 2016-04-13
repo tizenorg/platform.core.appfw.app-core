@@ -94,6 +94,11 @@
 /**
  * Appcore internal state
  */
+
+#ifndef EXPORT_API
+#define EXPORT_API
+#endif /* EXPORT_API */
+
 enum app_state {
 	AS_NONE,
 	AS_CREATED,
@@ -163,20 +168,20 @@ struct ui_ops {
 };
 
 /* appcore-i18n.c */
-extern void update_lang(void);
-extern int set_i18n(const char *domainname, const char *dirname);
-void update_region(void);
+EXPORT_API extern void update_lang(void);
+EXPORT_API extern int set_i18n(const char *domainname, const char *dirname);
+EXPORT_API void update_region(void);
 
 
 /* appcore-X.c */
-extern int x_raise_win(pid_t pid);
-extern int x_pause_win(pid_t pid);
+EXPORT_API extern int x_raise_win(pid_t pid);
+EXPORT_API extern int x_pause_win(pid_t pid);
 
 /* appcore-util.c */
 /* extern void stack_trim(void);*/
 
-int appcore_pause_rotation_cb(void);
-int appcore_resume_rotation_cb(void);
+EXPORT_API int appcore_pause_rotation_cb(void);
+EXPORT_API int appcore_resume_rotation_cb(void);
 
 struct ui_wm_rotate {
 	int (*set_rotation_cb) (int (*cb)(void *event_info, enum appcore_rm, void *), void *data);
@@ -185,15 +190,15 @@ struct ui_wm_rotate {
 	int (*pause_rotation_cb) (void);
 	int (*resume_rotation_cb) (void);
 };
-int appcore_set_wm_rotation(struct ui_wm_rotate* wm_rotate);
+EXPORT_API int appcore_set_wm_rotation(struct ui_wm_rotate* wm_rotate);
 
-void appcore_group_attach();
-void appcore_group_lower();
-unsigned int appcore_get_main_window(void);
+EXPORT_API void appcore_group_attach();
+EXPORT_API void appcore_group_lower();
+EXPORT_API unsigned int appcore_get_main_window(void);
 #if defined(WAYLAND)
 unsigned int appcore_get_main_surface(void);
 #endif
-void appcore_get_app_core(struct appcore **ac);
+EXPORT_API void appcore_get_app_core(struct appcore **ac);
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 int _appcore_init_suspend_dbus_handler(void *data);
 #endif

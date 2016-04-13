@@ -52,10 +52,15 @@
 extern "C" {
 #endif
 
-int appcore_efl_init(const char *name, int *argc, char ***argv,
+#ifndef EXPORT_API
+#define EXPORT_API
+#endif /* EXPORT_API */
+
+
+EXPORT_API int appcore_efl_init(const char *name, int *argc, char ***argv,
 		     struct appcore_ops *ops);
 
-void appcore_efl_fini(void);
+EXPORT_API void appcore_efl_fini(void);
 
 
 /**
@@ -123,7 +128,7 @@ int main(int argc, char *argv[])
  * @endcode
  *
  */
-int appcore_efl_main(const char *name, int *argc, char ***argv,
+EXPORT_API int appcore_efl_main(const char *name, int *argc, char ***argv,
 		     struct appcore_ops *ops);
 
 /**
@@ -162,9 +167,9 @@ int _create(void *data)
  * @endcode
  *
  */
-int appcore_set_system_resource_reclaiming(bool enable);
+EXPORT_API int appcore_set_system_resource_reclaiming(bool enable);
 
-int appcore_set_preinit_window_name(const char *win_name);
+EXPORT_API int appcore_set_preinit_window_name(const char *win_name);
 
 #ifdef __cplusplus
 }

@@ -63,6 +63,11 @@ extern "C" {
  * System global events related to the application
  * @see appcore_set_event_callback()
  */
+
+#ifndef EXPORT_API
+#define EXPORT_API
+#endif /* EXPORT_API */
+
 enum appcore_event {
 	APPCORE_EVENT_UNKNOWN,
 			/**< Unknown event */
@@ -209,7 +214,7 @@ int add_callbacks(struct appdata *data)
  * @endcode
  *
  */
-int appcore_set_event_callback(enum appcore_event event,
+EXPORT_API int appcore_set_event_callback(enum appcore_event event,
 		int (*cb)(void *, void *), void *data);
 
 /**
@@ -264,7 +269,7 @@ static int _rot_cb(enum appcore_rm, void *);
  * @endcode
  *
  */
-int appcore_set_rotation_cb(int (*cb) (void *event_info, enum appcore_rm, void *),
+EXPORT_API int appcore_set_rotation_cb(int (*cb) (void *event_info, enum appcore_rm, void *),
 			    void *data);
 
 /**
@@ -301,7 +306,7 @@ int appcore_set_rotation_cb(int (*cb) (void *event_info, enum appcore_rm, void *
  * @endcode
  *
  */
-int appcore_unset_rotation_cb(void);
+EXPORT_API int appcore_unset_rotation_cb(void);
 
 /**
  * @par Description:
@@ -347,7 +352,7 @@ int appcore_unset_rotation_cb(void);
  * @endcode
  *
  */
-int appcore_get_rotation_state(enum appcore_rm *curr);
+EXPORT_API int appcore_get_rotation_state(enum appcore_rm *curr);
 
 /**
  * @par Description:
@@ -393,7 +398,7 @@ int appcore_get_rotation_state(enum appcore_rm *curr);
  * @endcode
  *
  */
-int appcore_get_timeformat(enum appcore_time_format *timeformat);
+EXPORT_API int appcore_get_timeformat(enum appcore_time_format *timeformat);
 
 /**
  * @par Description:
@@ -444,7 +449,7 @@ int appcore_get_timeformat(enum appcore_time_format *timeformat);
  * @endcode
  *
  */
-int appcore_set_i18n(const char *domainname, const char *dirname);
+EXPORT_API int appcore_set_i18n(const char *domainname, const char *dirname);
 
 /**
  * @par Description:
@@ -485,7 +490,7 @@ int appcore_set_i18n(const char *domainname, const char *dirname);
  * @endcode
  *
  */
-void appcore_measure_start(void);
+EXPORT_API void appcore_measure_start(void);
 
 /**
  * @par Description:
@@ -530,7 +535,7 @@ void appcore_measure_start(void);
  * @endcode
  *
  */
-int appcore_measure_time(void);
+EXPORT_API int appcore_measure_time(void);
 
 /**
  * @par Description:
@@ -579,7 +584,7 @@ int appcore_measure_time(void);
  * @endcode
  *
  */
-int appcore_measure_time_from(const char *envnm);
+EXPORT_API int appcore_measure_time_from(const char *envnm);
 
 /**
  * Appcore UI operaions. Internal use only.
@@ -610,7 +615,7 @@ struct ui_ops;
  * @remarks Internal use only.
  *
  */
-int appcore_init(const char *name, const struct ui_ops *ops,
+EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 		 int argc, char **argv);
 
 /**
@@ -626,7 +631,7 @@ int appcore_init(const char *name, const struct ui_ops *ops,
  * @remarks Internal use only.
  *
  */
-void appcore_exit(void);
+EXPORT_API void appcore_exit(void);
 
 
 /**
@@ -673,7 +678,7 @@ void appcore_exit(void);
  * @endcode
  *
  */
-int appcore_flush_memory(void);
+EXPORT_API int appcore_flush_memory(void);
 
 /**
  * @par Description:
@@ -712,7 +717,7 @@ static int _open_cb(enum appcore_rm, void *);
  * @endcode
  *
  */
-int appcore_set_open_cb(int (*cb) (void *), void *data);
+EXPORT_API int appcore_set_open_cb(int (*cb) (void *), void *data);
 
 
 #ifdef __cplusplus
