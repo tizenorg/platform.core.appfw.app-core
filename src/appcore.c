@@ -670,6 +670,20 @@ EXPORT_API int appcore_set_event_callback(enum appcore_event event,
 	return 0;
 }
 
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+static gboolean __init_suspend(gpointer data)
+{
+	int r;
+
+	r = _appcore_init_suspend_dbus_handler(&core);
+	if (r == -1) {
+		_ERR("Initailzing suspended state handler failed");
+	}
+
+	return FALSE;
+}
+#endif
+
 EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 			    int argc, char **argv)
 {
@@ -692,14 +706,6 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 	r = set_i18n(name, dirname);
 	_retv_if(r == -1, -1);
 
-#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
-	r = _appcore_init_suspend_dbus_handler(&core);
-	if (r == -1) {
-		_ERR("Initailzing suspended state handler failed");
-		goto err;
-	}
-#endif
-
 	r = aul_launch_init(__aul_handler, &core);
 	if (r < 0) {
 		_ERR("Aul init failed: %d", r);
@@ -719,6 +725,10 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 	core.allowed_bg = false;
 
 	_pid = getpid();
+
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+	g_idle_add(__init_suspend, NULL);
+#endif
 
 	return 0;
  err:
