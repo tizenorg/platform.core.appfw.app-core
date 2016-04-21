@@ -1069,7 +1069,8 @@ static void __after_loop(struct ui_priv *ui)
 
 	__appcore_timer_del(ui);
 
-	elm_shutdown();
+	/* Check the launchpad-loader case */
+	while (elm_shutdown() > 0);
 }
 
 static int __set_data(struct ui_priv *ui, const char *name,
