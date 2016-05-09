@@ -512,7 +512,9 @@ static void __remove_suspend_timer(struct appcore *ac)
 static int __aul_handler(aul_type type, bundle *b, void *data)
 {
 	int ret;
-	const char *tep_path = NULL;
+	const char **tep_path = NULL;
+	int len = 0;
+	int i;
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 	const char *bg = NULL;
 	struct appcore *ac = data;
@@ -521,12 +523,14 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 	switch (type) {
 	case AUL_START:
 		_DBG("[APP %d]     AUL event: AUL_START", _pid);
-		tep_path = bundle_get_val(b, AUL_TEP_PATH);
+		tep_path = bundle_get_str_array(b, AUL_TEP_PATH, &len);
 		if (tep_path) {
-			ret = aul_check_tep_mount(tep_path);
-			if (ret == -1) {
-				_ERR("mount request not completed within 1 sec");
-				exit(-1);
+			for (i = 0; i < len; i++) {
+				ret = aul_check_tep_mount(tep_path[i]);
+				if (ret == -1) {
+					_ERR("mount request not completed within 1 sec");
+					exit(-1);
+				}
 			}
 		}
 
