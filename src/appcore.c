@@ -30,7 +30,6 @@
 #include <dlfcn.h>
 #include <vconf.h>
 #include <aul.h>
-#include <tzplatform_config.h>
 #include <bundle_internal.h>
 #include "appcore-internal.h"
 
@@ -44,11 +43,6 @@
 
 #define SQLITE_FLUSH_MAX		(1024*1024)
 
-#define PKGNAME_MAX 256
-#define PATH_APP_ROOT tzplatform_getenv(TZ_USER_APP)
-#define PATH_SYS_RO_APP_ROOT tzplatform_getenv(TZ_SYS_RO_APP)
-#define PATH_SYS_RW_APP_ROOT tzplatform_getenv(TZ_SYS_RW_APP)
-#define PATH_RES "/res"
 #define PATH_LOCALE "/locale"
 
 static struct appcore core;
@@ -146,34 +140,18 @@ static GDBusConnection *bus = NULL;
 static guint __suspend_dbus_handler_initialized = 0;
 #endif
 
-static int __get_dir_name(char *dirname)
+static int __get_locale_resource_dir(char *locale_dir, int size)
 {
-	char pkg_name[PKGNAME_MAX];
-	int r;
-	int pid;
+	const char *res_path;
 
-	pid = getpid();
-	if (pid < 0)
+	res_path = aul_get_app_resource_path();
+	if (res_path == NULL) {
+		_ERR("Failed to get resource path");
 		return -1;
+	}
 
-	if (aul_app_get_pkgname_bypid(pid, pkg_name, PKGNAME_MAX) != AUL_R_OK)
-		return -1;
-
-	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
-			PATH_APP_ROOT, pkg_name);
-	if (r < 0)
-		return -1;
-	if (access(dirname, R_OK) == 0)
-		return 0;
-	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
-			PATH_SYS_RO_APP_ROOT, pkg_name);
-	if (r < 0)
-		return -1;
-	if (access(dirname, R_OK) == 0)
-		return 0;
-	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
-			PATH_SYS_RW_APP_ROOT, pkg_name);
-	if (r < 0)
+	snprintf(locale_dir, size, "%s" PATH_LOCALE, res_path);
+	if (access(locale_dir, R_OK) != 0)
 		return -1;
 
 	return 0;
@@ -692,7 +670,7 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 			    int argc, char **argv)
 {
 	int r;
-	char dirname[PATH_MAX];
+	char locale_dir[PATH_MAX];
 
 	if (core.state != 0) {
 		_ERR("Already in use");
@@ -706,8 +684,8 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 		return -1;
 	}
 
-	r = __get_dir_name(dirname);
-	r = set_i18n(name, dirname);
+	r = __get_locale_resource_dir(locale_dir, sizeof(locale_dir));
+	r = set_i18n(name, locale_dir);
 	_retv_if(r == -1, -1);
 
 	r = aul_launch_init(__aul_handler, &core);
