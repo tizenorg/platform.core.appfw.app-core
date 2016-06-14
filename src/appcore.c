@@ -146,33 +146,40 @@ static GDBusConnection *bus = NULL;
 static guint __suspend_dbus_handler_initialized = 0;
 #endif
 
-static int __get_dir_name(char *dirname)
+static int __get_locale_resource_dir(char *locale_dir, int size)
 {
-	char pkg_name[PKGNAME_MAX];
+	char pkgid[PKGNAME_MAX];
 	int r;
-	int pid;
+	const char *root_path;
 
-	pid = getpid();
-	if (pid < 0)
+	root_path = aul_get_preinit_root_path();
+	if (root_path) {
+		r = snprintf(locale_dir, size, "%s" PATH_RES PATH_LOCALE,
+				root_path);
+		if (r < 0)
+			return -1;
+		if (access(locale_dir, R_OK) == 0)
+			return 0;
+	}
+
+	r = aul_app_get_pkgid_bypid(getpid(), pkgid, sizeof(pkgid));
+	if (r != AUL_R_OK)
 		return -1;
 
-	if (aul_app_get_pkgname_bypid(pid, pkg_name, PKGNAME_MAX) != AUL_R_OK)
-		return -1;
-
-	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
-			PATH_APP_ROOT, pkg_name);
+	r = snprintf(locale_dir, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
+			PATH_APP_ROOT, pkgid);
 	if (r < 0)
 		return -1;
-	if (access(dirname, R_OK) == 0)
+	if (access(locale_dir, R_OK) == 0)
 		return 0;
-	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
-			PATH_SYS_RO_APP_ROOT, pkg_name);
+	r = snprintf(locale_dir, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
+			PATH_SYS_RO_APP_ROOT, pkgid);
 	if (r < 0)
 		return -1;
-	if (access(dirname, R_OK) == 0)
+	if (access(locale_dir, R_OK) == 0)
 		return 0;
-	r = snprintf(dirname, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
-			PATH_SYS_RW_APP_ROOT, pkg_name);
+	r = snprintf(locale_dir, PATH_MAX, "%s/%s" PATH_RES PATH_LOCALE,
+			PATH_SYS_RW_APP_ROOT, pkgid);
 	if (r < 0)
 		return -1;
 
@@ -692,7 +699,7 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 			    int argc, char **argv)
 {
 	int r;
-	char dirname[PATH_MAX];
+	char locale_dir[PATH_MAX];
 
 	if (core.state != 0) {
 		_ERR("Already in use");
@@ -706,8 +713,8 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 		return -1;
 	}
 
-	r = __get_dir_name(dirname);
-	r = set_i18n(name, dirname);
+	r = __get_locale_resource_dir(locale_dir, sizeof(locale_dir));
+	r = set_i18n(name, locale_dir);
 	_retv_if(r == -1, -1);
 
 	r = aul_launch_init(__aul_handler, &core);
