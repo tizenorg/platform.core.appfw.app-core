@@ -151,6 +151,17 @@ static int __get_dir_name(char *dirname)
 	char pkg_name[PKGNAME_MAX];
 	int r;
 	int pid;
+	const char *root_path;
+
+	root_path = aul_get_preinit_root_path();
+	if (root_path) {
+		r = snprintf(dirname, PATH_MAX, "%s" PATH_RES PATH_LOCALE,
+				root_path);
+		if (r < 0)
+			return -1;
+		if (access(dirname, R_OK) == 0)
+			return 0;
+	}
 
 	pid = getpid();
 	if (pid < 0)
