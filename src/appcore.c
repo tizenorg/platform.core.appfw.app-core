@@ -47,6 +47,7 @@
 
 static struct appcore core;
 static pid_t _pid;
+static int first_launch = 1;
 
 static enum appcore_event to_ae[SE_MAX] = {
 	APPCORE_EVENT_UNKNOWN,	/* SE_UNKNOWN */
@@ -518,6 +519,10 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 			_DBG("[__SUSPEND__] allowed background");
 			ac->allowed_bg = true;
 			__remove_suspend_timer(data);
+			if (first_launch) {
+				__add_suspend_timer(data);
+				first_launch = 0;
+			}
 		}
 #endif
 
