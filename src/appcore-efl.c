@@ -434,6 +434,10 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:reset:done]", ui->name);
 
 		if (first_launch) {
+#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+			if (ui->app_core->allowed_bg)
+				__appcore_timer_add(ui);
+#endif
 			first_launch = FALSE;
 		} else {
 			_INFO("[APP %d] App already running, raise the window", _pid);
@@ -483,6 +487,8 @@ static void __do_app(enum app_event event, void *data, bundle * b)
 			_DBG("[__SUSPEND__] resume case");
 			ui->exit_from_suspend(ui);
 		}
+		if (ui->app_core->allowed_bg)
+			__appcore_timer_del(ui);
 #endif
 
 		if (ui->state == AS_PAUSED || ui->state == AS_CREATED) {
