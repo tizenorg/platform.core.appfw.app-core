@@ -47,6 +47,7 @@
 
 static struct appcore core;
 static pid_t _pid;
+static int first_launch = 1;
 
 static enum appcore_event to_ae[SE_MAX] = {
 	APPCORE_EVENT_UNKNOWN,	/* SE_UNKNOWN */
@@ -452,6 +453,18 @@ static int __del_vconf_list(void)
 }
 
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
+static gboolean __init_suspend(gpointer data)
+{
+	int r;
+
+	r = _appcore_init_suspend_dbus_handler(&core);
+	if (r == -1) {
+		_ERR("Initailzing suspended state handler failed");
+	}
+
+	return FALSE;
+}
+
 static gboolean __flush_memory(gpointer data)
 {
 	int suspend = APPCORE_SUSPENDED_STATE_WILL_ENTER_SUSPEND;
@@ -517,7 +530,12 @@ static int __aul_handler(aul_type type, bundle *b, void *data)
 		if (bg && strncmp(bg, "ALLOWED_BG", strlen("ALLOWED_BG")) == 0) {
 			_DBG("[__SUSPEND__] allowed background");
 			ac->allowed_bg = true;
-			__remove_suspend_timer(data);
+		}
+
+		if (first_launch) {
+			__add_suspend_timer(data);
+			g_idle_add(__init_suspend, NULL);
+			first_launch = 0;
 		}
 #endif
 
@@ -652,20 +670,6 @@ EXPORT_API int appcore_set_event_callback(enum appcore_event event,
 	return 0;
 }
 
-#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
-static gboolean __init_suspend(gpointer data)
-{
-	int r;
-
-	r = _appcore_init_suspend_dbus_handler(&core);
-	if (r == -1) {
-		_ERR("Initailzing suspended state handler failed");
-	}
-
-	return FALSE;
-}
-#endif
-
 EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 			    int argc, char **argv)
 {
@@ -707,10 +711,6 @@ EXPORT_API int appcore_init(const char *name, const struct ui_ops *ops,
 	core.allowed_bg = false;
 
 	_pid = getpid();
-
-#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
-	g_idle_add(__init_suspend, NULL);
-#endif
 
 	return 0;
  err:
