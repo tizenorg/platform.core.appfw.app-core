@@ -129,7 +129,10 @@ static GSList *g_winnode_list;
 static struct wl_display *dsp;
 static struct wl_registry *reg;
 static struct tizen_policy *tz_policy;
-static bool bg_state = false;
+static bool bg_state;
+static int new_argc;
+static char **new_argv;
+static int exported;
 
 static void __wl_listener_cb(void *data, struct wl_registry *reg,
 		uint32_t id, const char *interface, uint32_t ver)
@@ -960,6 +963,29 @@ static void __add_climsg_cb(struct ui_priv *ui)
 #endif
 }
 
+static void __initialize_argv(bundle *b, int argc, char **argv)
+{
+	if (b)
+		new_argc = bundle_export_to_argv(b, &new_argv);
+
+	if (new_argv) {
+		new_argv[0] = argv[0];
+		exported = 1;
+	} else {
+		new_argc = argc;
+		new_argv = argv;
+	}
+}
+
+static void __finalize_argv(void)
+{
+	if (exported)
+		bundle_free_exported_argv(new_argc, &new_argv);
+
+	new_argc = 0;
+	new_argv = NULL;
+}
+
 static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 {
 	int r;
@@ -967,8 +993,9 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 #if _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 	struct appcore *ac = NULL;
 #endif
-	bundle *b;
+	bundle *b = NULL;
 	const char *bg_launch;
+	unsigned char *extra_data;
 
 	if (argc == NULL || argv == NULL) {
 		_ERR("argc/argv is NULL");
@@ -976,10 +1003,19 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 		return -1;
 	}
 
+	extra_data = aul_get_extra_data();
+	if (extra_data) {
+		b = bundle_decode((bundle_raw *)extra_data,
+				strlen((const char *)extra_data));
+		free(extra_data);
+	}
+
+	__initialize_argv(b, *argc, *argv);
+
 #if !(GLIB_CHECK_VERSION(2, 36, 0))
 	g_type_init();
 #endif
-	elm_init(*argc, *argv);
+	elm_init(new_argc, new_argv);
 
 	hwacc = getenv("HWACC");
 	if (hwacc == NULL) {
@@ -994,8 +1030,12 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 		_DBG("elm_config_accel_preference_set is not called");
 	}
 
-	r = appcore_init(ui->name, &efl_ops, *argc, *argv);
-	_retv_if(r == -1, -1);
+	r = appcore_init(ui->name, &efl_ops, new_argc, new_argv);
+	if (r < 0) {
+		__finalize_argv();
+		bundle_free(b);
+		return -1;
+	}
 
 #if _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 	appcore_get_app_core(&ac);
@@ -1003,7 +1043,6 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 	SECURE_LOGD("[__SUSPEND__] appcore initialized, appcore addr: #%x", ac);
 #endif
 
-	b = bundle_import_from_argv(*argc, *argv);
 	if (b) {
 		bg_launch = bundle_get_val(b, AUL_SVC_K_BG_LAUNCH);
 		if (bg_launch && strcmp(bg_launch, "enable") == 0)
@@ -1027,6 +1066,7 @@ static int __before_loop(struct ui_priv *ui, int *argc, char ***argv)
 				traceEnd(TTRACE_TAG_APPLICATION_MANAGER);
 			}
 			errno = ECANCELED;
+			__finalize_argv();
 			return -1;
 		}
 		LOG(LOG_DEBUG, "LAUNCH", "[%s:Application:create:done]",
@@ -1077,6 +1117,8 @@ static void __after_loop(struct ui_priv *ui)
 
 	/* Check the launchpad-loader case */
 	while (elm_shutdown() > 0);
+
+	__finalize_argv();
 }
 
 static int __set_data(struct ui_priv *ui, const char *name,
