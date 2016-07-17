@@ -39,6 +39,9 @@
 #define RESOURCED_FREEZER_PATH "/Org/Tizen/Resourced/Freezer"
 #define RESOURCED_FREEZER_INTERFACE "org.tizen.resourced.freezer"
 #define RESOURCED_FREEZER_SIGNAL "FreezerState"
+
+int __appcore_init_suspend_dbus_handler(void *data);
+void __appcore_fini_suspend_dbus_handler(void);
 #endif
 
 #define SQLITE_FLUSH_MAX		(1024*1024)
@@ -136,8 +139,8 @@ static struct evt_ops evtops[] = {
 };
 
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
-static GDBusConnection *bus = NULL;
-static guint __suspend_dbus_handler_initialized = 0;
+static GDBusConnection *bus;
+static guint __suspend_dbus_handler_initialized;
 #endif
 
 static int __get_locale_resource_dir(char *locale_dir, int size)
@@ -657,7 +660,7 @@ static gboolean __init_suspend(gpointer data)
 {
 	int r;
 
-	r = _appcore_init_suspend_dbus_handler(&core);
+	r = __appcore_init_suspend_dbus_handler(&core);
 	if (r == -1) {
 		_ERR("Initailzing suspended state handler failed");
 	}
@@ -726,6 +729,7 @@ EXPORT_API void appcore_exit(void)
 		__clear(&core);
 #ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
 		__remove_suspend_timer(&core);
+		__appcore_fini_suspend_dbus_handler();
 #endif
 	}
 	aul_finalize();
@@ -789,7 +793,7 @@ static void __suspend_dbus_signal_handler(GDBusConnection *connection,
 	}
 }
 
-int _appcore_init_suspend_dbus_handler(void *data)
+int __appcore_init_suspend_dbus_handler(void *data)
 {
 	GError *err = NULL;
 
@@ -826,4 +830,20 @@ int _appcore_init_suspend_dbus_handler(void *data)
 
 	return 0;
 }
+
+void __appcore_fini_suspend_dbus_handler(void)
+{
+	if (bus == NULL)
+		return;
+
+	if (__suspend_dbus_handler_initialized) {
+		g_dbus_connection_signal_unsubscribe(bus,
+				__suspend_dbus_handler_initialized);
+		__suspend_dbus_handler_initialized = 0;
+	}
+
+	g_object_unref(bus);
+	bus = NULL;
+}
 #endif
+

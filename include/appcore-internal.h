@@ -194,9 +194,6 @@ unsigned int appcore_get_main_window(void);
 unsigned int appcore_get_main_surface(void);
 #endif
 void appcore_get_app_core(struct appcore **ac);
-#ifdef _APPFW_FEATURE_BACKGROUND_MANAGEMENT
-int _appcore_init_suspend_dbus_handler(void *data);
-#endif
 
 #define ENV_START "APP_START_TIME"
 
