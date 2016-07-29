@@ -33,11 +33,14 @@ static int _set;
 
 void update_lang(void)
 {
+	char language[32];
 	char *lang;
 	char *r;
 
 	lang = vconf_get_str(VCONFKEY_LANGSET);
 	if (lang) {
+		snprintf(language, sizeof(language), "%s:en_US:en_GB:en", lang);
+		setenv("LANGUAGE", language, 1);
 		setenv("LANG", lang, 1);
 		setenv("LC_MESSAGES", lang, 1);
 		r = setlocale(LC_ALL, "");
